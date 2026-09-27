@@ -32,7 +32,8 @@ services:
     image: ghcr.io/max-main-team/hackaton_max_2026/frontend:latest
     restart: unless-stopped
     ports:
-      - "80:80"
+      # системный nginx хоста (TLS, 80/443) проксирует на этот порт
+      - "127.0.0.1:8081:80"
     depends_on:
       - backend
 

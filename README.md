@@ -45,12 +45,15 @@ Push в `main` триггерит `.github/workflows/ci-cd.yml`:
    (рендерится из GitHub Secrets), `docker compose pull && up -d`,
    проверка `GET /api/v1/health`
 
-Сервер: `/opt/max-miniapp`. Секреты GitHub: `SSH_HOST`, `SSH_USER`,
-`SSH_PRIVATE_KEY`, `POSTGRES_PASSWORD`, `JWT_SECRET`, `MAX_BOT_TOKEN`,
-`GHCR_TOKEN` (PAT с `read:packages` для pull из GHCR).
+Сервер: `/opt/max-miniapp` (Cloud.ru VPS, домен `eclipse-sim.ru`). Секреты
+GitHub: `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `POSTGRES_PASSWORD`,
+`JWT_SECRET`, `MAX_BOT_TOKEN`, `GHCR_TOKEN` (PAT с `read:packages` для pull
+из GHCR).
 
-⚠️ Мини-приложения MAX требуют `https` — для релиза нужен домен +
-TLS-сертификат перед nginx (certbot) либо проксирующий сервис.
+Схема прода: `интернет → nginx хоста (TLS :80/:443, certbot) → frontend-контейнер
+(127.0.0.1:8081) → backend:8080 → postgres`. Конфиг хоста:
+`/etc/nginx/sites-available/max-miniapp` (server_name `eclipse-sim.ru`,
+`www.eclipse-sim.ru`).
 
 ## Запуск в разработке
 
