@@ -26,6 +26,9 @@ export interface MaxWebApp {
   expand: () => void
   close: () => void
   sendData: (data: string) => void
+  shareMaxContent: (
+    params: { text?: string; link?: string } | { mid: string; chatType: 'DIALOG' | 'CHAT' },
+  ) => void
   onEvent: (event: string, handler: (...args: unknown[]) => void) => void
   offEvent: (event: string, handler: (...args: unknown[]) => void) => void
   HapticFeedback?: {

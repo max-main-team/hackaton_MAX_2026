@@ -1,0 +1,98 @@
+import { Navigate, createBrowserRouter } from 'react-router-dom'
+import { Guard } from './guard'
+import Login from './login'
+import Onboarding from './onboarding'
+import ResumeScreen from './candidate/resume'
+import InvitationsScreen from './candidate/invitations'
+import ReferralScreen from './candidate/referral'
+import CompanyScreen from './recruiter/company'
+import VacanciesScreen from './recruiter/vacancies'
+import VacancyNew from './recruiter/vacancy-new'
+import Feed from './recruiter/feed'
+import CandidateList from './recruiter/candidate-list'
+import MapScreen from './map'
+
+export const router = createBrowserRouter([
+  { path: '/', element: <Login /> },
+  {
+    path: '/onboarding',
+    element: (
+      <Guard>
+        <Onboarding />
+      </Guard>
+    ),
+  },
+  {
+    path: '/resume',
+    element: (
+      <Guard role="candidate">
+        <ResumeScreen />
+      </Guard>
+    ),
+  },
+  {
+    path: '/invitations',
+    element: (
+      <Guard role="candidate">
+        <InvitationsScreen />
+      </Guard>
+    ),
+  },
+  {
+    path: '/referral',
+    element: (
+      <Guard>
+        <ReferralScreen />
+      </Guard>
+    ),
+  },
+  {
+    path: '/map',
+    element: (
+      <Guard>
+        <MapScreen />
+      </Guard>
+    ),
+  },
+  {
+    path: '/company',
+    element: (
+      <Guard role="recruiter">
+        <CompanyScreen />
+      </Guard>
+    ),
+  },
+  {
+    path: '/company/vacancies',
+    element: (
+      <Guard role="recruiter">
+        <VacanciesScreen />
+      </Guard>
+    ),
+  },
+  {
+    path: '/company/vacancies/new',
+    element: (
+      <Guard role="recruiter">
+        <VacancyNew />
+      </Guard>
+    ),
+  },
+  {
+    path: '/vacancy/:id/feed',
+    element: (
+      <Guard role="recruiter">
+        <Feed />
+      </Guard>
+    ),
+  },
+  {
+    path: '/vacancy/:id/list',
+    element: (
+      <Guard role="recruiter">
+        <CandidateList />
+      </Guard>
+    ),
+  },
+  { path: '*', element: <Navigate to="/" replace /> },
+])

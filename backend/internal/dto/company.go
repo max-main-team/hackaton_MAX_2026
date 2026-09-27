@@ -18,10 +18,12 @@ type CompanyInput struct {
 
 type Company struct {
 	CompanyInput
-	ID        int64     `json:"id"`
-	Verified  bool      `json:"verified"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          int64     `json:"id"`
+	Verified    bool      `json:"verified"`
+	BotUserID   *int64    `json:"bot_user_id"`
+	BotUsername string    `json:"bot_username"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 var Positions = []string{"owner", "hr", "employee"}
@@ -48,10 +50,12 @@ func FromCompany(c repository.Company) Company {
 			LogoURL:     c.LogoURL,
 			Address:     c.Address,
 		},
-		ID:        c.ID,
-		Verified:  c.Verified,
-		CreatedAt: c.CreatedAt,
-		UpdatedAt: c.UpdatedAt,
+		ID:          c.ID,
+		Verified:    c.Verified,
+		BotUserID:   c.BotUserID,
+		BotUsername: c.BotUsername,
+		CreatedAt:   c.CreatedAt,
+		UpdatedAt:   c.UpdatedAt,
 	}
 }
 
