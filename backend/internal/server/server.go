@@ -9,7 +9,6 @@ import (
 	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
-	"github.com/swaggo/swag"
 
 	swaggerDocs "max-miniapp/backend/docs"
 	"max-miniapp/backend/internal/config"
@@ -34,7 +33,6 @@ func New(cfg *config.Config, log *slog.Logger, pool *pgxpool.Pool) *Server {
 		log.Warn("MAX_BOT_TOKEN is empty: initData signature verification is disabled (dev mode only)")
 	}
 
-	swag.Register(swag.Name, swaggerDocs.SwaggerInfo)
 	swaggerDocs.SwaggerInfo.Host = "eclipse-sim.ru"
 	swaggerDocs.SwaggerInfo.Schemes = []string{"https"}
 
