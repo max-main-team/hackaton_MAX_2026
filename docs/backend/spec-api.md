@@ -1,6 +1,6 @@
 # Spec: API v1 (полный контракт)
 
-Тикеты: T-05–T-11 (см. `docs/common/tasks.md`).
+Тикеты: T-05–T-11 (см. `docs/tasks/`).
 
 Общее: база `/api/v1`, JSON, ошибки `{"message": "..."}`. Все эндпоинты
 кроме `/health` и `/auth` — за `RequireAuth` (см. `spec-auth.md`).
