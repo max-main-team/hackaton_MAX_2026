@@ -28,7 +28,7 @@
 
 | ID   | Задача | Статус | Зависит | Файл |
 |------|--------|--------|---------|------|
-| T-12 | Воркер еженедельного опроса + `POST /my/resume/confirm-activity` | ⬜ | T-06 | [T-12-survey-worker.md](./T-12-survey-worker.md) |
+| T-12 | Воркер еженедельного опроса + `POST /my/resume/confirm-activity` | ✅ | T-06 | [T-12-survey-worker.md](./T-12-survey-worker.md) |
 | T-19 | Сидовые данные для демо (scripts/seed_demo.py) | ✅ | T-07 | [T-19-demo-seeds.md](./T-19-demo-seeds.md) |
 
 ## Новые фичи (верификация, рефералка, карта)

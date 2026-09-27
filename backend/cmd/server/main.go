@@ -15,6 +15,7 @@ import (
 	"max-miniapp/backend/internal/config"
 	"max-miniapp/backend/internal/database"
 	"max-miniapp/backend/internal/server"
+	"max-miniapp/backend/internal/worker"
 )
 
 // @title           MAX Mini App — Reverse Hiring API
@@ -53,6 +54,10 @@ func run() error {
 	log.Info("migrations applied")
 
 	srv := server.New(cfg, log, pool)
+
+	workerCtx, workerCancel := context.WithCancel(ctx)
+	defer workerCancel()
+	worker.NewSurveyWorker(pool, cfg.MaxBotToken, log).Start(workerCtx)
 
 	errCh := make(chan error, 1)
 	go func() {
