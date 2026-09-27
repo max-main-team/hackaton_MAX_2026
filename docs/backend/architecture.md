@@ -32,7 +32,7 @@ repository → pgxpool → Postgres`. Слой `service` отсутствует 
 | `ENV`               | `dev`                                     | `prod` включает JSON-логи           |
 | `ADDR`              | `:8080`                                   | Адрес HTTP-сервера                  |
 | `DATABASE_URL`      | `postgres://...@localhost:5433/maxapp`    | Строка подключения                  |
-| `MAX_APP_SECRET_KEY`| пусто                                     | Секрет приложения MAX (см. api.md)  |
+| `MAX_BOT_TOKEN`| пусто                                     | Секрет приложения MAX (см. api.md)  |
 
 Пул: `MaxConns=10`, `MinConns=2`, `MaxConnLifetime=1h`. Graceful shutdown —
 10 секунд (SIGINT/SIGTERM).

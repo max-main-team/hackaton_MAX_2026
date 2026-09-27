@@ -25,10 +25,16 @@ func Verify(raw, appSecret string) error
 
 - Парсинг: `url.ParseQuery`, поле `user` — JSON (`id`, `first_name`,
   `last_name`, `username`, `photo_url`), поле `auth_date` — unix-секунды.
-- Отклонять `auth_date` старше 24 часов (`ErrInitDataExpired`).
-- **Dev-режим:** если `MAX_APP_SECRET_KEY` пуст — проверку подписи
+- Подпись проверяется по алгоритму из `docs/max/init-data.md`:
+  `hash = hex(HMAC_SHA256(secret_key, launch_params))`, где
+  `secret_key = HMAC_SHA256("WebAppData", MAX_BOT_TOKEN)`, а
+  `launch_params` — пары `key=value` (без `hash`), отсортированные по
+  ключу и склеенные через `\n`. Сравнение — `hmac.Equal`.
+- Отклонять `auth_date` старше 1 часа (рекомендация MAX,
+  `ErrInitDataExpired`).
+- **Dev-режим:** если `MAX_BOT_TOKEN` пуст — проверку подписи
   пропустить и писать warning в лог при старте. Это режим хакатона;
-  в проде ключ обязателен.
+  в проде токен обязателен.
 
 ## 2. JWT
 
@@ -45,10 +51,10 @@ func Verify(raw, appSecret string) error
 
 Новые env (в `.env.example` тоже):
 
-| Переменная          | Обязательность                          |
-|---------------------|-----------------------------------------|
-| `JWT_SECRET`        | всегда                                  |
-| `MAX_APP_SECRET_KEY`| прод (в dev может быть пустым)          |
+| Переменная     | Обязательность                                       |
+|----------------|------------------------------------------------------|
+| `JWT_SECRET`   | всегда                                               |
+| `MAX_BOT_TOKEN`| прод (в dev может быть пустым); также нужен воркеру T-12 |
 
 ## 3. Обновлённый POST /api/v1/auth
 
@@ -92,7 +98,7 @@ private.Use(middleware.RequireAuth(jwtSecret))
 ## Критерии приёмки
 
 - [ ] `POST /auth` с невалидной подписью → 401 (при заданном секретe).
-- [ ] `POST /auth` с протухшим `auth_date` (>24ч) → 401.
+- [ ] `POST /auth` с протухшим `auth_date` (>1 часа) → 401.
 - [ ] Запрос без токена к защищённому эндпоинту → 401.
 - [ ] Запрос с битым/просроченным токеном → 401.
 - [ ] Пустой `JWT_SECRET` → сервер не стартует с понятной ошибкой.

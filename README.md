@@ -81,8 +81,9 @@ curl -X POST http://localhost:8080/api/v1/auth \
 - **MAX Bridge** — глобальный объект `window.WebApp` (скрипт подключён в `frontend/index.html`).
   Типы и хелперы — `frontend/src/lib/max.ts`: `getInitData()`, `isInsideMax()`, `ready()`, `expand()` и т.д.
 - `initData` отправляется на `POST /api/v1/auth`; бекенд создаёт/обновляет пользователя.
-  **Важно:** перед продом нужно добавить проверку подписи initData секретным ключом
-  приложения (`MAX_APP_SECRET_KEY`) — в `internal/handler/auth.go` стоит TODO.
+- **Важно:** перед продом нужно добавить проверку подписи initData токеном
+  бота (`MAX_BOT_TOKEN`) — алгоритм и готовая Go-реализация:
+  `docs/max/init-data.md`.
 - Для стилизации под нативный UI MAX есть библиотека React-компонентов
   [`@maxhub/max-ui`](https://github.com/max-messenger/max-ui) — подключается по желанию.
 

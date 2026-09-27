@@ -26,6 +26,12 @@ docs/
 │   ├── spec-domain.md    — SPECS: миграции 000002/000003, репозитории
 │   ├── spec-api.md       — SPECS: полный контракт API v1 (целевое состояние)
 │   └── spec-matching.md  — SPECS: скоринг, TTL, еженедельный опрос
+├── max/                  — выжимка документации MAX (dev.max.ru)
+│   ├── README.md         — индекс + ключевые факты
+│   ├── mini-app-setup.md — бот, привязка мини-аппа, диплинки
+│   ├── bridge.md         — справочник window.WebApp
+│   ├── init-data.md      — структура initData + алгоритм валидации + Go
+│   └── bot-api.md        — Bot API: сообщения, кнопки, лимиты
 └── frontend/
     ├── architecture.md   — структура, прокси, команды
     ├── max-bridge.md     — интеграция с MAX (window.WebApp, initData)

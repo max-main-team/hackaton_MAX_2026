@@ -11,7 +11,7 @@ type Config struct {
 	Env             string
 	Addr            string
 	DatabaseURL     string
-	MaxAppSecretKey string
+	MaxBotToken     string
 	ShutdownTimeout time.Duration
 }
 
@@ -22,7 +22,7 @@ func Load() *Config {
 		Env:             getEnv("ENV", "dev"),
 		Addr:            getEnv("ADDR", ":8080"),
 		DatabaseURL:     getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5433/maxapp?sslmode=disable"),
-		MaxAppSecretKey: os.Getenv("MAX_APP_SECRET_KEY"),
+		MaxBotToken:     os.Getenv("MAX_BOT_TOKEN"),
 		ShutdownTimeout: 10 * time.Second,
 	}
 }
