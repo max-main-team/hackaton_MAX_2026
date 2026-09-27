@@ -66,7 +66,7 @@ src/
 «Открой мини-апп через MAX».
 
 ### Свайп-лента (`/vacancy/:id/feed`, фича 1.5)
-- Данные: `GET /candidates?mode=feed`.
+- Данные: `GET /vacancies/{id}/candidates?mode=feed`.
 - Карточка `UserCard`: имя, фото, title, навыки тегами, score-бейдж.
 - Свайп влево/кнопка ✕ → `POST .../action {action: "skip"}`.
 - Свайп вправо/кнопка ♥ → `invite`. После — следующая карточка.
@@ -80,7 +80,7 @@ src/
 - `accept` → экран успеха (матч: название компании + контакт рекрутера).
 
 ### Список кандидатов (`/vacancy/:id/list`, фича 1.4)
-- `GET /candidates?mode=list&page=N`: таблица (имя, title, город, score),
+- `GET /vacancies/{id}/candidates?mode=list&limit=20&offset=0`: таблица (имя, title, город, score),
   сортировка по score, клик → разворот карточки с кнопками invite/skip.
 
 ### Настройка TTL (в форме вакансии)

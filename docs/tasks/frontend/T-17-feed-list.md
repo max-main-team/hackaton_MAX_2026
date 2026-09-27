@@ -8,11 +8,11 @@
 ## Что сделать
 
 - `components/UserCard.tsx`: имя, фото, title, навыки тегами, score-бейдж.
-- `routes/recruiter/feed.tsx` (фича 1.5): `GET /candidates?mode=feed`;
+- `routes/recruiter/feed.tsx` (фича 1.5): `GET /vacancies/{id}/candidates?mode=feed`;
   свайп влево / ✕ → skip, вправо / ♥ → invite (`POST .../action`);
   следующая карточка; `HapticFeedback.impactOccurred('light')` на свайп;
   пусто → «Кандидаты закончились».
-- `routes/recruiter/candidate-list.tsx` (фича 1.4): `GET /candidates?mode=list`
+- `routes/recruiter/candidate-list.tsx` (фича 1.4): `GET /vacancies/{id}/candidates?mode=list`
   с пагинацией; таблица (имя, title, город, score), сортировка по score,
   клик → разворот карточки с invite/skip.
 

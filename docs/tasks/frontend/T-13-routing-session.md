@@ -10,8 +10,10 @@
 - `npm i react-router-dom`.
 - `src/lib/session.ts`: getToken/setToken/clearToken (localStorage
   `max_token`), `authHeaders()`, обработка 401 → clearToken → редирект `/`.
-- `src/api/`: `client.ts` (fetch + Bearer), `auth.ts` (auth, me, setRole),
-  `resume.ts`, `company.ts` — типы snake_case по спеке.
+- `src/api/`: `client.ts` (fetch + Bearer), `auth.ts` — `auth()` возвращает
+  `{ token, user }` (формат T-03, уже реализован), `me()`, `setRole()`;
+  `resume.ts`, `company.ts` — типы snake_case по Swagger
+  (`https://eclipse-sim.ru/api/docs`).
 - `src/main.tsx` → `RouterProvider`; удалить `App.tsx`; заглушки роутов
   по таблице роутов из спеки.
 

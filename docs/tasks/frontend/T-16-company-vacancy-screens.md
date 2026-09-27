@@ -8,8 +8,13 @@
 ## Что сделать
 
 - `routes/recruiter/company.tsx`: `GET /my/companies` пуст → форма
-  создания; иначе карточка компании (с `Badge` verified) + переход к вакансиям.
-- `routes/recruiter/vacancy-new.tsx`: поля вакансии + TTL-селект
+  создания (name, description, website, logo_url, address + селект своей
+  позиции `owner | hr | employee` — создатель не обязан быть owner);
+  иначе карточка компании (с `Badge` verified) + переход к вакансиям.
+- `routes/recruiter/vacancy-new.tsx`: поля вакансии по контракту
+  `VacancyInput` — title, description, required_skills,
+  min_experience_months, city, work_format, employment_type,
+  salary_min/salary_max (опционально) + TTL-селект
   (12/24/48/72/168 ч, дефолт 48) → `POST /companies/{id}/vacancies`
   → переход к списку.
 - `routes/recruiter/vacancies.tsx`: список вакансий компании
