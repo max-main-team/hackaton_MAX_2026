@@ -103,3 +103,23 @@ private.Use(middleware.RequireAuth(jwtSecret))
 - [ ] Запрос с битым/просроченным токеном → 401.
 - [ ] Пустой `JWT_SECRET` → сервер не стартует с понятной ошибкой.
 - [ ] `go build`, `go vet`, `gofmt -l` — чисто.
+
+## Сравнение с референс-реализацией (max-main-team/backend_hackaton_MAX)
+
+Референс: uni-bot расписание, тоже MAX mini app.
+
+| Аспект | Референс | У нас |
+|--------|----------|-------|
+| Валидация подписи | HMAC-SHA256("WebAppData", botToken) → подпись строк, hex-compare | та же схема |
+| Формат запроса | `POST /auth/login`, form-urlencoded (raw initData как form body) | `POST /auth` JSON c initData-строкой — эквивалентно |
+| Свежесть auth_date | не проверяется — initData можно переигрывать бесконечно | отсечка > 1 часа |
+| Сравнение хешей | `==` (не constant-time) | `hmac.Equal` |
+| JWT | HS256, кастомные Claims с данными юзера внутри (имя, аватар) | HS256, минимальные claims (sub/iat/exp) — данные всегда свежие из БД |
+| Refresh-токены | access 24ч + refresh 24 дня в БД + cookie HttpOnly + `POST /auth/refresh` | один access на 7 дней |
+| Middleware | Bearer → ParseToken → юзер в контексте | то же |
+| Upsert юзера | create/update при логине | то же |
+| DTO | models/dto + http/dto разделены | internal/dto — тот же принцип |
+| Swagger | swag-аннотации | то же |
+
+Если 7-дневного access-токена окажется мало (жалобы на вылеты) — берём их
+паттерн refresh-токенов: `refresh_repo` + cookie HttpOnly + `POST /auth/refresh`.
