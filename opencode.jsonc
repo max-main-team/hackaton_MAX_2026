@@ -1,0 +1,31 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Автономная работа: минимум запросов подтверждения.
+  // Последнее совпадающее правило выигрывает.
+  "permissions": [
+    { "action": "shell", "resource": "*", "effect": "allow" },
+    { "action": "edit", "resource": "*", "effect": "allow" },
+    { "action": "read", "resource": "*.env", "effect": "allow" },
+    { "action": "read", "resource": "*.env.*", "effect": "allow" },
+    {
+      "action": "external_directory",
+      "resource": "/private/var/folders/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/projects/*",
+      "effect": "allow"
+    },
+    // страховка от необратимых действий на хосте
+    { "action": "shell", "resource": "sudo *", "effect": "deny" },
+    { "action": "shell", "resource": "rm -rf /", "effect": "deny" }
+  ],
+  "commands": {
+    "goal": {
+      "description": "Долгая автономная задача на часы",
+      "agent": "build",
+      "template": "Выполняй следующую задачу полностью автономно, не задавая вопросов. Контекст проекта: README.md, ARCHITECTURE.md, docs/. Задачи и статусы: docs/tasks/. Контракты API: https://eclipse-sim.ru/api/docs и docs/backend/spec-*.md. Правила: каждый тикет = коммит с обновлением статусов (файл тикета, README-индекс, docs/common/status.md); перед сдачей — go build/vet/gofmt и npm build/lint; комментарии в коде не писать. Задача: $ARGUMENTS. Работай до полного завершения, в конце дай отчёт: что сделано, что проверено, что осталось."
+    }
+  }
+}
