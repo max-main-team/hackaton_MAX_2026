@@ -29,11 +29,12 @@ type authRequest struct {
 }
 
 type maxUser struct {
-	ID        int64  `json:"id"`
-	Username  string `json:"username"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	PhotoURL  string `json:"photo_url"`
+	ID           int64  `json:"id"`
+	Username     string `json:"username"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	PhotoURL     string `json:"photo_url"`
+	LanguageCode string `json:"language_code"`
 }
 
 func (h *AuthHandler) Auth(c echo.Context) error {
@@ -51,11 +52,12 @@ func (h *AuthHandler) Auth(c echo.Context) error {
 	}
 
 	saved, err := h.users.UpsertUser(c.Request().Context(), repository.User{
-		ID:        user.ID,
-		Username:  user.Username,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		PhotoURL:  user.PhotoURL,
+		ID:           user.ID,
+		Username:     user.Username,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		PhotoURL:     user.PhotoURL,
+		LanguageCode: user.LanguageCode,
 	})
 	if err != nil {
 		h.log.Error("upsert user failed", slog.Any("err", err))

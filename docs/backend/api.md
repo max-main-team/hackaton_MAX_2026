@@ -41,6 +41,7 @@
   "first_name": "Ivan",
   "last_name": "Petrov",
   "photo_url": "",
+  "language_code": "ru",
   "created_at": "2026-09-27T16:34:06.061663+03:00",
   "updated_at": "2026-09-27T16:34:06.073838+03:00"
 }

@@ -17,8 +17,20 @@
 | first_name | TEXT NOT NULL DEFAULT '' |                  |
 | last_name  | TEXT NOT NULL DEFAULT '' |                  |
 | photo_url  | TEXT NOT NULL DEFAULT '' |                  |
+| language_code | TEXT NOT NULL DEFAULT '' | из initData (ru/en), для локализации |
 | created_at | TIMESTAMPTZ NOT NULL DEFAULT now()       |
 | updated_at | TIMESTAMPTZ NOT NULL DEFAULT now()       |
+
+`user_consents` — согласия пользователя (миграция `000002_user_fields`):
+
+| Колонка     | Тип         | Заметка               |
+|-------------|-------------|-----------------------|
+| id          | BIGSERIAL PK |                      |
+| user_id     | BIGINT REFERENCES users |           |
+| consent     | TEXT        | `'personal_data'` и др. |
+| accepted_at | TIMESTAMPTZ NOT NULL DEFAULT now() |  |
+
+`UNIQUE (user_id, consent)` — повторное согласие обновляет дату, без дублей.
 
 Служебная `schema_migrations (version BIGINT PK, name TEXT, applied_at)` —
 создаётся раннером.
@@ -35,7 +47,7 @@
 
 ### Как добавить миграцию
 
-1. Следующий номер: `000002_<краткое_имя>.up.sql` + `.down.sql`.
+1. Следующий номер: `000004_<краткое_имя>.up.sql` + `.down.sql` (000004 занята actions, дальше 000005+).
 2. Up — только аддитивные изменения (новая таблица/колонка с дефолтом),
    чтобы деплой не ломал старую версию бинаря.
 3. Закоммитить оба файла в одном коммите с изменениями кода.

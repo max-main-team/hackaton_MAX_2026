@@ -11,16 +11,18 @@
 ### POST /auth — см. spec-auth.md
 
 ### GET /me
-Ответ `200`: объект пользователя (как в auth, `role` включительно).
+Ответ `200`: объект пользователя + `personal_data_accepted_at`
+(`null` или timestamp из `user_consents`).
 
 ### POST /me/role
 ```json
-{"role": "candidate"}
+{"role": "candidate", "acceptPersonalData": true}
 ```
 - `role` ∈ `candidate | recruiter`, иначе 400.
-- Повторная смена роли разрешена (для демо), ответ — обновлённый пользователь.
-- Кандидат: роль меняется; рекрутер: роль меняется (компания привязывается
-  отдельным эндпоинтом).
+- `acceptPersonalData = true` обязателен (иначе 400) → upsert в
+  `user_consents ('personal_data')`.
+- Повторная смена роли разрешена (для демо), ответ — обновлённый пользователь
+  + `personal_data_accepted_at`.
 
 ## Кандидат: резюме
 

@@ -5,7 +5,23 @@
 Все изменения — только новые миграции `backend/migrations/`. Формат:
 `0000NN_имя.up.sql` + `.down.sql`, применяются автоматически при старте.
 
-## 000002 — роли, компании, резюме, вакансии
+## 000002 — user_fields (уже применена в базовом коммите)
+
+- `ALTER TABLE users ADD COLUMN language_code TEXT NOT NULL DEFAULT ''`
+  (из initData, для локализации).
+- Таблица согласий:
+
+```sql
+CREATE TABLE user_consents (
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT NOT NULL REFERENCES users (id),
+    consent     TEXT        NOT NULL,   -- 'personal_data' | ...
+    accepted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (user_id, consent)
+);
+```
+
+## 000003 — роли, компании, резюме, вакансии
 
 ```sql
 ALTER TABLE users ADD COLUMN role TEXT;
@@ -59,7 +75,7 @@ CREATE TABLE vacancies (
 Конвенция `schedule`: `'full' | 'part' | 'remote' | 'hybrid'` — общая для
 резюме и вакансий, валидируется в handler'е (белый список).
 
-## 000003 — приглашения и ответы
+## 000004 — приглашения и ответы
 
 ```sql
 CREATE TABLE recruiter_actions (
@@ -108,7 +124,7 @@ CREATE INDEX idx_resumes_active ON resumes (is_active);
 
 ## Критерии приёмки
 
-- [ ] Сервер со свежей БД стартует, миграции 000002–000003 применяются.
+- [ ] Сервер со свежей БД стартует, миграции 000003–000004 применяются.
 - [ ] Повторный старт не пытается применить их повторно.
 - [ ] `down`-миграции откатывают изменения (проверить вручную через psql).
 - [ ] UNIQUE-ограничение: повторный `recruiter_actions` на ту же пару даёт
