@@ -1,6 +1,6 @@
 # T-22 — Верификация компании (фронт)
 
-- **Статус:** ⬜
+- **Статус:** ✅
 - **Спека:** docs/tasks/backend/T-21-company-verification.md, docs/frontend/spec-ui.md
 - **Зависимости:** T-16 (бек: T-21)
 
