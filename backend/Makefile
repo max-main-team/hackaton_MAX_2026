@@ -1,4 +1,4 @@
-.PHONY: run build test vet tidy
+.PHONY: run build test vet tidy swag
 
 run:
 	go run ./cmd/server
@@ -14,3 +14,6 @@ vet:
 
 tidy:
 	go mod tidy
+
+swag:
+	swag init -g cmd/server/main.go --parseDependency --parseDepth 2 -o docs
