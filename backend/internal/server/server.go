@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
 
+	apidocs "max-miniapp/backend/api"
 	"max-miniapp/backend/internal/config"
 	"max-miniapp/backend/internal/handler"
 	"max-miniapp/backend/internal/middleware"
@@ -45,6 +46,9 @@ func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 	health := handler.NewHealthHandler(pool, s.log)
 	users := repository.NewUserRepo(pool)
 	auth := handler.NewAuthHandler(users, s.cfg, s.log)
+
+	s.echo.GET("/api/openapi.yaml", apidocs.OpenAPIYAML)
+	s.echo.GET("/api/docs", apidocs.SwaggerUI)
 
 	api := s.echo.Group("/api/v1")
 	api.GET("/health", health.Health)
