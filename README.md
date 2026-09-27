@@ -45,7 +45,9 @@ Push в `main` триггерит `.github/workflows/ci-cd.yml`:
    (рендерится из GitHub Secrets), `docker compose pull && up -d`,
    проверка `GET /api/v1/health`
 
-Сервер: `/opt/max-miniapp` (Cloud.ru VPS, домен `eclipse-sim.ru`). Секреты
+Сервер: `/opt/max-miniapp` (Cloud.ru VPS). **Прод:** `https://eclipse-sim.ru`
+(TLS через certbot, автопродление; host nginx терминирует HTTPS и проксирует
+на frontend-контейнер). Секреты
 GitHub: `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `POSTGRES_PASSWORD`,
 `JWT_SECRET`, `MAX_BOT_TOKEN`, `GHCR_TOKEN` (PAT с `read:packages` для pull
 из GHCR).
