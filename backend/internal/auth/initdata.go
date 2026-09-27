@@ -54,6 +54,14 @@ func ParseInitData(raw string) (InitDataUser, time.Time, error) {
 	return user, time.Unix(sec, 0), nil
 }
 
+func StartParam(raw string) string {
+	values, err := url.ParseQuery(raw)
+	if err != nil {
+		return ""
+	}
+	return values.Get("start_param")
+}
+
 // Verify проверяет подпись initData: подписантом выступает токен бота,
 // чьё мини-приложение запущено (см. docs/max/init-data.md).
 func Verify(rawInitData, botToken string) error {

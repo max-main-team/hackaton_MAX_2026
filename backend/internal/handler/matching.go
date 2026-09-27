@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -21,6 +22,9 @@ type MatchingHandler struct {
 	users     *repository.UserRepo
 	resumes   *repository.ResumeRepo
 	matching  *repository.MatchingRepo
+	scores    *repository.ScoreRepo
+	ai        *scoring.AIClient
+	aiModel   string
 	log       *slog.Logger
 }
 
@@ -30,11 +34,15 @@ func NewMatchingHandler(
 	users *repository.UserRepo,
 	resumes *repository.ResumeRepo,
 	matching *repository.MatchingRepo,
+	scores *repository.ScoreRepo,
+	ai *scoring.AIClient,
+	aiModel string,
 	log *slog.Logger,
 ) *MatchingHandler {
 	return &MatchingHandler{
 		companies: companies, vacancies: vacancies, users: users,
-		resumes: resumes, matching: matching, log: log,
+		resumes: resumes, matching: matching, scores: scores,
+		ai: ai, aiModel: aiModel, log: log,
 	}
 }
 
@@ -135,8 +143,54 @@ func (h *MatchingHandler) Candidates(c echo.Context) error {
 		}})
 	}
 
+	if h.ai.Enabled() && len(entries) > 0 {
+		sem := make(chan struct{}, 4)
+		var wg sync.WaitGroup
+		for idx := range entries {
+			wg.Add(1)
+			go func(idx int) {
+				defer wg.Done()
+				sem <- struct{}{}
+				defer func() { <-sem }()
+
+				r := entries[idx].item.Resume
+				cached, err := h.scores.GetScore(ctx, r.ID, vacancyID)
+				if err == nil && cached != nil && cached.AIScore != nil {
+					entries[idx].item.AIScore = cached.AIScore
+					entries[idx].item.AIComment = cached.AIComment
+				} else {
+					if err != nil {
+						h.log.Error("get cached score failed", slog.Any("err", err))
+					}
+					result, err := h.ai.ScoreAI(vac, scoring.Resume{
+						Skills:           r.Skills,
+						ExperienceMonths: r.ExperienceMonths,
+						City:             r.City,
+						WorkFormat:       r.WorkFormat,
+					})
+					if err != nil {
+						h.log.Error("ai scoring failed", slog.Any("err", err))
+						return
+					}
+					ai := result.Score
+					entries[idx].item.AIScore = &ai
+					entries[idx].item.AIComment = result.Comment
+					_ = h.scores.UpsertScore(ctx, repository.ResumeScore{
+						ResumeID: r.ID, VacancyID: vacancyID,
+						AlgoScore: entries[idx].item.Score, AIScore: &ai,
+						AIComment: result.Comment, AIModel: h.aiModel,
+					})
+				}
+				if entries[idx].item.AIScore != nil {
+					entries[idx].item.FinalScore = int(float64(entries[idx].item.Score)*0.6 + float64(*entries[idx].item.AIScore)*0.4)
+				}
+			}(idx)
+		}
+		wg.Wait()
+	}
+
 	sort.SliceStable(entries, func(i, j int) bool {
-		return entries[i].item.Score > entries[j].item.Score
+		return entries[i].item.FinalScore > entries[j].item.FinalScore
 	})
 
 	mode := c.QueryParam("mode")

@@ -1,5 +1,14 @@
 basePath: /
 definitions:
+  internal_handler.referralResponse:
+    properties:
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.ReferralItem'
+        type: array
+    type: object
   max-miniapp_backend_internal_dto.AuthRequest:
     properties:
       initData:
@@ -8,11 +17,42 @@ definitions:
     type: object
   max-miniapp_backend_internal_dto.AuthResponse:
     properties:
+      referral_code:
+        example: ref_42
+        type: string
       token:
         example: eyJhbGciOiJIUzI1NiIs...
         type: string
       user:
         $ref: '#/definitions/max-miniapp_backend_internal_dto.User'
+    type: object
+  max-miniapp_backend_internal_dto.CandidateItem:
+    properties:
+      ai_comment:
+        type: string
+      ai_score:
+        type: integer
+      breakdown:
+        $ref: '#/definitions/max-miniapp_backend_internal_scoring.Breakdown'
+      final_score:
+        example: 85
+        type: integer
+      resume:
+        $ref: '#/definitions/max-miniapp_backend_internal_dto.Resume'
+      score:
+        example: 87
+        type: integer
+      user:
+        $ref: '#/definitions/max-miniapp_backend_internal_dto.User'
+    type: object
+  max-miniapp_backend_internal_dto.CandidatesResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.CandidateItem'
+        type: array
+      total:
+        type: integer
     type: object
   max-miniapp_backend_internal_dto.Company:
     properties:
@@ -82,12 +122,117 @@ definitions:
         example: invalid request body
         type: string
     type: object
+  max-miniapp_backend_internal_dto.Invitation:
+    properties:
+      company:
+        $ref: '#/definitions/max-miniapp_backend_internal_dto.InvitationCompany'
+      deadline_at:
+        type: string
+      hours_left:
+        type: number
+      id:
+        type: integer
+      response:
+        type: string
+      status:
+        enum:
+        - pending
+        - overdue
+        - resulted
+        type: string
+      vacancy:
+        $ref: '#/definitions/max-miniapp_backend_internal_dto.InvitationVacancy'
+    type: object
+  max-miniapp_backend_internal_dto.InvitationCompany:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      verified:
+        type: boolean
+    type: object
+  max-miniapp_backend_internal_dto.InvitationVacancy:
+    properties:
+      city:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.MapVacancy:
+    properties:
+      city:
+        type: string
+      company_name:
+        type: string
+      id:
+        type: integer
+      lat:
+        type: number
+      lng:
+        type: number
+      salary_max:
+        type: integer
+      salary_min:
+        type: integer
+      title:
+        type: string
+      verified:
+        type: boolean
+    type: object
+  max-miniapp_backend_internal_dto.MatchResult:
+    properties:
+      company:
+        $ref: '#/definitions/max-miniapp_backend_internal_dto.InvitationCompany'
+      id:
+        type: integer
+      recruiter_contact:
+        type: string
+      response:
+        type: string
+      vacancy:
+        $ref: '#/definitions/max-miniapp_backend_internal_dto.InvitationVacancy'
+    type: object
   max-miniapp_backend_internal_dto.MeResponse:
     properties:
       personal_data_accepted_at:
         type: string
+      referral_code:
+        example: ref_42
+        type: string
       user:
         $ref: '#/definitions/max-miniapp_backend_internal_dto.User'
+    type: object
+  max-miniapp_backend_internal_dto.RecruiterActionResponse:
+    properties:
+      action:
+        enum:
+        - invite
+        - skip
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+    type: object
+  max-miniapp_backend_internal_dto.ReferralItem:
+    properties:
+      first_name:
+        type: string
+      id:
+        type: integer
+      joined_at:
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.RespondRequest:
+    properties:
+      response:
+        enum:
+        - accept
+        - decline
+        type: string
     type: object
   max-miniapp_backend_internal_dto.Resume:
     properties:
@@ -263,6 +408,10 @@ definitions:
         type: integer
       is_active:
         type: boolean
+      lat:
+        type: number
+      lng:
+        type: number
       min_experience_months:
         example: 12
         type: integer
@@ -307,6 +456,10 @@ definitions:
         - internship
         example: full_time
         type: string
+      lat:
+        type: number
+      lng:
+        type: number
       min_experience_months:
         example: 12
         type: integer
@@ -341,6 +494,22 @@ definitions:
         type: integer
       response_ttl_hours:
         example: 72
+        type: integer
+    type: object
+  max-miniapp_backend_internal_dto.VerifyRequest:
+    properties:
+      bot_token:
+        type: string
+    type: object
+  max-miniapp_backend_internal_scoring.Breakdown:
+    properties:
+      city:
+        type: integer
+      experience:
+        type: integer
+      schedule:
+        type: integer
+      skills:
         type: integer
     type: object
 info:
@@ -500,6 +669,104 @@ paths:
       summary: Создать вакансию
       tags:
       - vacancy
+  /api/v1/companies/{id}/verify:
+    post:
+      consumes:
+      - application/json
+      description: Проверяет токен бота через GET /me платформы MAX и помечает компанию
+        верифицированной.
+      parameters:
+      - description: ID компании
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: токен бота
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.VerifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.Company'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Верифицировать компанию
+      tags:
+      - company
+  /api/v1/invitations/{id}/respond:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID приглашения
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: ответ
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.RespondRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.MatchResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Ответить на приглашение
+      tags:
+      - invitations
   /api/v1/me:
     get:
       produces:
@@ -581,6 +848,52 @@ paths:
       summary: Мои компании
       tags:
       - company
+  /api/v1/my/invitations:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/max-miniapp_backend_internal_dto.Invitation'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Мои приглашения
+      tags:
+      - invitations
+  /api/v1/my/referrals:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.referralResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Мои рефералы
+      tags:
+      - profile
   /api/v1/my/resume:
     get:
       produces:
@@ -721,6 +1034,141 @@ paths:
       security:
       - BearerAuth: []
       summary: Обновить вакансию
+      tags:
+      - vacancy
+  /api/v1/vacancies/{id}/candidates:
+    get:
+      description: |-
+        mode=list — постранично (limit/offset), mode=feed — лента без пагинации.
+        Только кандидаты с активным резюме и без действия по этой вакансии.
+      parameters:
+      - description: ID вакансии
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: list
+        enum:
+        - list
+        - feed
+        in: query
+        name: mode
+        type: string
+      - description: "20"
+        in: query
+        name: limit
+        type: integer
+      - description: "0"
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.CandidatesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Кандидаты под вакансию
+      tags:
+      - matching
+  /api/v1/vacancies/{id}/candidates/{candidateUserId}/action:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID вакансии
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: ID кандидата
+        in: path
+        name: candidateUserId
+        required: true
+        type: integer
+      - description: action
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.RecruiterActionResponse'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.RecruiterActionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Действие рекрутера на кандидата
+      tags:
+      - matching
+  /api/v1/vacancies/map:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/max-miniapp_backend_internal_dto.MapVacancy'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Вакансии на карте
       tags:
       - vacancy
 securityDefinitions:

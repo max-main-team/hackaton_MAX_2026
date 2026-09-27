@@ -15,6 +15,7 @@ import (
 	"max-miniapp/backend/internal/handler"
 	"max-miniapp/backend/internal/middleware"
 	"max-miniapp/backend/internal/repository"
+	"max-miniapp/backend/internal/scoring"
 )
 
 type Server struct {
@@ -60,7 +61,12 @@ func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 	companyH := handler.NewCompanyHandler(companies, vacancies, s.log)
 	vacancyH := handler.NewVacancyHandler(companies, vacancies, s.log)
 	matchingRepo := repository.NewMatchingRepo(pool)
-	matchingH := handler.NewMatchingHandler(companies, vacancies, users, resumes, matchingRepo, s.log)
+	scoreRepo := repository.NewScoreRepo(pool)
+	aiClient := scoring.NewAIClient(s.cfg.AIAPIKey, s.cfg.AIBaseURL, s.cfg.AIModel)
+	if aiClient.Enabled() {
+		s.log.Info("ai scoring enabled", slog.String("base_url", s.cfg.AIBaseURL), slog.String("model", s.cfg.AIModel))
+	}
+	matchingH := handler.NewMatchingHandler(companies, vacancies, users, resumes, matchingRepo, scoreRepo, aiClient, s.cfg.AIModel, s.log)
 
 	s.echo.GET("/swagger/*any", echoSwagger.EchoWrapHandler())
 	s.echo.GET("/api/docs", func(c echo.Context) error {
@@ -80,6 +86,9 @@ func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 	private.POST("/my/resume/confirm-activity", resumeH.ConfirmActivity)
 	private.POST("/companies", companyH.Create)
 	private.GET("/my/companies", companyH.ListMine)
+	private.POST("/companies/:id/verify", companyH.Verify)
+	private.GET("/vacancies/map", vacancyH.Map)
+	private.GET("/my/referrals", meH.Referrals)
 	private.GET("/companies/:id/vacancies", companyH.VacancyList)
 	private.POST("/companies/:id/vacancies", companyH.VacancyCreate)
 	private.PATCH("/vacancies/:id", vacancyH.Update)

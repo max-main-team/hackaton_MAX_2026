@@ -45,13 +45,15 @@ type AuthRequest struct {
 }
 
 type AuthResponse struct {
-	Token string `json:"token" example:"eyJhbGciOiJIUzI1NiIs..."`
-	User  User   `json:"user"`
+	Token        string `json:"token" example:"eyJhbGciOiJIUzI1NiIs..."`
+	User         User   `json:"user"`
+	ReferralCode string `json:"referral_code" example:"ref_42"`
 }
 
 type MeResponse struct {
 	User                   User       `json:"user"`
 	PersonalDataAcceptedAt *time.Time `json:"personal_data_accepted_at"`
+	ReferralCode           string     `json:"referral_code" example:"ref_42"`
 }
 
 type RoleRequest struct {

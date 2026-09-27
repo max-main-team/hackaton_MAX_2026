@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -14,6 +15,11 @@ import (
 type MeHandler struct {
 	users *repository.UserRepo
 	log   *slog.Logger
+}
+
+type referralResponse struct {
+	Count int                `json:"count"`
+	Items []dto.ReferralItem `json:"items"`
 }
 
 func NewMeHandler(users *repository.UserRepo, log *slog.Logger) *MeHandler {
@@ -51,7 +57,40 @@ func (h *MeHandler) Me(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.MeResponse{
 		User:                   dto.FromUser(user),
 		PersonalDataAcceptedAt: consentAt,
+		ReferralCode:           fmt.Sprintf("ref_%d", user.ID),
 	})
+}
+
+// Referrals — приглашённые пользователи.
+//
+//	@Summary     Мои рефералы
+//	@Tags        profile
+//	@Produce     json
+//	@Success     200 {object} referralResponse
+//	@Failure     401 {object} dto.ErrorResponse
+//	@Failure     500 {object} dto.ErrorResponse
+//	@Security    BearerAuth
+//	@Router      /api/v1/my/referrals [get]
+func (h *MeHandler) Referrals(c echo.Context) error {
+	userID, err := middleware.UserIDFromContext(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	referrals, err := h.users.ListReferrals(c.Request().Context(), userID)
+	if err != nil {
+		h.log.Error("list referrals failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+	if referrals == nil {
+		referrals = []repository.Referral{}
+	}
+
+	items := make([]dto.ReferralItem, 0, len(referrals))
+	for _, r := range referrals {
+		items = append(items, dto.ReferralItem{ID: r.ID, FirstName: r.FirstName, JoinedAt: r.JoinedAt})
+	}
+	return c.JSON(http.StatusOK, referralResponse{Count: len(items), Items: items})
 }
 
 // SetRole выбирает роль пользователя и фиксирует согласие на обработку ПДн.

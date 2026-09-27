@@ -80,3 +80,34 @@ func (h *VacancyHandler) Update(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, dto.FromVacancy(saved))
 }
+
+// Map — активные вакансии с координатами.
+//
+//	@Summary     Вакансии на карте
+//	@Tags        vacancy
+//	@Produce     json
+//	@Success     200 {array} dto.MapVacancy
+//	@Failure     401 {object} dto.ErrorResponse
+//	@Failure     500 {object} dto.ErrorResponse
+//	@Security    BearerAuth
+//	@Router      /api/v1/vacancies/map [get]
+func (h *VacancyHandler) Map(c echo.Context) error {
+	items, err := h.vacancies.MapVacancies(c.Request().Context())
+	if err != nil {
+		h.log.Error("map vacancies failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+	if items == nil {
+		items = []repository.MapVacancy{}
+	}
+
+	out := make([]dto.MapVacancy, 0, len(items))
+	for _, m := range items {
+		out = append(out, dto.MapVacancy{
+			ID: m.ID, Title: m.Title, CompanyName: m.CompanyName,
+			Verified: m.Verified, City: m.City, Lat: m.Lat, Lng: m.Lng,
+			SalaryMin: m.SalaryMin, SalaryMax: m.SalaryMax,
+		})
+	}
+	return c.JSON(http.StatusOK, out)
+}

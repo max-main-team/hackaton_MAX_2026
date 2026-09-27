@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -82,5 +85,17 @@ func (h *AuthHandler) Auth(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
 	}
 
-	return c.JSON(http.StatusOK, dto.AuthResponse{Token: token, User: dto.FromUser(saved)})
+	if startParam := auth.StartParam(req.InitData); strings.HasPrefix(startParam, "ref_") {
+		if refID, err := strconv.ParseInt(strings.TrimPrefix(startParam, "ref_"), 10, 64); err == nil && refID != saved.ID {
+			if err := h.users.SetReferrerIfEmpty(c.Request().Context(), saved.ID, refID); err != nil {
+				h.log.Warn("set referrer failed", slog.Any("err", err))
+			}
+		}
+	}
+
+	return c.JSON(http.StatusOK, dto.AuthResponse{
+		Token:        token,
+		User:         dto.FromUser(saved),
+		ReferralCode: fmt.Sprintf("ref_%d", saved.ID),
+	})
 }

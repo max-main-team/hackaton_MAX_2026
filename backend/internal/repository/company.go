@@ -20,6 +20,8 @@ type Company struct {
 	LogoURL     string    `json:"logo_url"`
 	Address     string    `json:"address"`
 	Verified    bool      `json:"verified"`
+	BotUserID   *int64    `json:"bot_user_id"`
+	BotUsername string    `json:"bot_username"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -33,14 +35,15 @@ func NewCompanyRepo(pool *pgxpool.Pool) *CompanyRepo {
 }
 
 const companyColumns = `
-	id, name, description, website, logo_url, address, verified, created_at, updated_at
+	id, name, description, website, logo_url, address, verified,
+	bot_user_id, bot_username, created_at, updated_at
 `
 
 func scanCompany(row pgx.Row) (Company, error) {
 	var c Company
 	err := row.Scan(
 		&c.ID, &c.Name, &c.Description, &c.Website, &c.LogoURL,
-		&c.Address, &c.Verified, &c.CreatedAt, &c.UpdatedAt,
+		&c.Address, &c.Verified, &c.BotUserID, &c.BotUsername, &c.CreatedAt, &c.UpdatedAt,
 	)
 	if err != nil {
 		return Company{}, err
@@ -143,4 +146,16 @@ func (r *CompanyRepo) UpdateMemberPosition(ctx context.Context, companyID, userI
 		return ErrCompanyNotFound
 	}
 	return nil
+}
+
+// MarkVerified помечает компанию верифицированной после проверки бота.
+func (r *CompanyRepo) MarkVerified(ctx context.Context, id int64, botUserID int64, botUsername string) (Company, error) {
+	saved, err := scanCompany(r.pool.QueryRow(ctx, `
+		UPDATE companies SET verified = TRUE, bot_user_id = $2, bot_username = $3, updated_at = now()
+		WHERE id = $1
+		RETURNING `+companyColumns, id, botUserID, botUsername))
+	if err != nil {
+		return Company{}, fmt.Errorf("mark verified: %w", err)
+	}
+	return saved, nil
 }

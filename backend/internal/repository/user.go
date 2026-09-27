@@ -121,3 +121,41 @@ func (r *UserRepo) GetConsentAcceptedAt(ctx context.Context, userID int64, conse
 	}
 	return at, nil
 }
+
+// SetReferrerIfEmpty записывает реферера только если он ещё не установлен.
+func (r *UserRepo) SetReferrerIfEmpty(ctx context.Context, userID, referrerID int64) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE users SET referrer_id = $2, referrer_at = now()
+		WHERE id = $1 AND referrer_id IS NULL AND id <> $2
+	`, userID, referrerID)
+	if err != nil {
+		return fmt.Errorf("set referrer: %w", err)
+	}
+	return nil
+}
+
+type Referral struct {
+	ID        int64     `json:"id"`
+	FirstName string    `json:"first_name"`
+	JoinedAt  time.Time `json:"joined_at"`
+}
+
+func (r *UserRepo) ListReferrals(ctx context.Context, userID int64) ([]Referral, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, first_name, created_at FROM users WHERE referrer_id = $1 ORDER BY created_at
+	`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("list referrals: %w", err)
+	}
+	defer rows.Close()
+
+	var out []Referral
+	for rows.Next() {
+		var ref Referral
+		if err := rows.Scan(&ref.ID, &ref.FirstName, &ref.JoinedAt); err != nil {
+			return nil, fmt.Errorf("scan referral: %w", err)
+		}
+		out = append(out, ref)
+	}
+	return out, rows.Err()
+}

@@ -244,6 +244,157 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/companies/{id}/verify": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Проверяет токен бота через GET /me платформы MAX и помечает компанию верифицированной.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "company"
+                ],
+                "summary": "Верифицировать компанию",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID компании",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "токен бота",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.VerifyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.Company"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/invitations/{id}/respond": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "invitations"
+                ],
+                "summary": "Ответить на приглашение",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID приглашения",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "ответ",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.RespondRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.MatchResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/me": {
             "get": {
                 "security": [
@@ -358,6 +509,81 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/max-miniapp_backend_internal_dto.Company"
                             }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/my/invitations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "invitations"
+                ],
+                "summary": "Мои приглашения",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/max-miniapp_backend_internal_dto.Invitation"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/my/referrals": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Мои рефералы",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.referralResponse"
                         }
                     },
                     "401": {
@@ -522,6 +748,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/vacancies/map": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vacancy"
+                ],
+                "summary": "Вакансии на карте",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/max-miniapp_backend_internal_dto.MapVacancy"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/vacancies/{id}": {
             "patch": {
                 "security": [
@@ -596,9 +861,191 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/vacancies/{id}/candidates": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "mode=list — постранично (limit/offset), mode=feed — лента без пагинации.\nТолько кандидаты с активным резюме и без действия по этой вакансии.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "matching"
+                ],
+                "summary": "Кандидаты под вакансию",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID вакансии",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "list",
+                            "feed"
+                        ],
+                        "type": "string",
+                        "description": "list",
+                        "name": "mode",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "20",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "0",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.CandidatesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/vacancies/{id}/candidates/{candidateUserId}/action": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "matching"
+                ],
+                "summary": "Действие рекрутера на кандидата",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID вакансии",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID кандидата",
+                        "name": "candidateUserId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "action",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.RecruiterActionResponse"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.RecruiterActionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "internal_handler.referralResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/max-miniapp_backend_internal_dto.ReferralItem"
+                    }
+                }
+            }
+        },
         "max-miniapp_backend_internal_dto.AuthRequest": {
             "type": "object",
             "properties": {
@@ -611,12 +1058,58 @@ const docTemplate = `{
         "max-miniapp_backend_internal_dto.AuthResponse": {
             "type": "object",
             "properties": {
+                "referral_code": {
+                    "type": "string",
+                    "example": "ref_42"
+                },
                 "token": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIs..."
                 },
                 "user": {
                     "$ref": "#/definitions/max-miniapp_backend_internal_dto.User"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.CandidateItem": {
+            "type": "object",
+            "properties": {
+                "ai_comment": {
+                    "type": "string"
+                },
+                "ai_score": {
+                    "type": "integer"
+                },
+                "breakdown": {
+                    "$ref": "#/definitions/max-miniapp_backend_internal_scoring.Breakdown"
+                },
+                "final_score": {
+                    "type": "integer",
+                    "example": 85
+                },
+                "resume": {
+                    "$ref": "#/definitions/max-miniapp_backend_internal_dto.Resume"
+                },
+                "score": {
+                    "type": "integer",
+                    "example": 87
+                },
+                "user": {
+                    "$ref": "#/definitions/max-miniapp_backend_internal_dto.User"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.CandidatesResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/max-miniapp_backend_internal_dto.CandidateItem"
+                    }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
@@ -716,14 +1209,173 @@ const docTemplate = `{
                 }
             }
         },
+        "max-miniapp_backend_internal_dto.Invitation": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "$ref": "#/definitions/max-miniapp_backend_internal_dto.InvitationCompany"
+                },
+                "deadline_at": {
+                    "type": "string"
+                },
+                "hours_left": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "response": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "overdue",
+                        "resulted"
+                    ]
+                },
+                "vacancy": {
+                    "$ref": "#/definitions/max-miniapp_backend_internal_dto.InvitationVacancy"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.InvitationCompany": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "verified": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.InvitationVacancy": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.MapVacancy": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "company_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "salary_max": {
+                    "type": "integer"
+                },
+                "salary_min": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "verified": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.MatchResult": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "$ref": "#/definitions/max-miniapp_backend_internal_dto.InvitationCompany"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "recruiter_contact": {
+                    "type": "string"
+                },
+                "response": {
+                    "type": "string"
+                },
+                "vacancy": {
+                    "$ref": "#/definitions/max-miniapp_backend_internal_dto.InvitationVacancy"
+                }
+            }
+        },
         "max-miniapp_backend_internal_dto.MeResponse": {
             "type": "object",
             "properties": {
                 "personal_data_accepted_at": {
                     "type": "string"
                 },
+                "referral_code": {
+                    "type": "string",
+                    "example": "ref_42"
+                },
                 "user": {
                     "$ref": "#/definitions/max-miniapp_backend_internal_dto.User"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.RecruiterActionResponse": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "invite",
+                        "skip"
+                    ]
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.ReferralItem": {
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "joined_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.RespondRequest": {
+            "type": "object",
+            "properties": {
+                "response": {
+                    "type": "string",
+                    "enum": [
+                        "accept",
+                        "decline"
+                    ]
                 }
             }
         },
@@ -967,6 +1619,12 @@ const docTemplate = `{
                 "is_active": {
                     "type": "boolean"
                 },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
                 "min_experience_months": {
                     "type": "integer",
                     "example": 12
@@ -1026,6 +1684,12 @@ const docTemplate = `{
                     ],
                     "example": "full_time"
                 },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
                 "min_experience_months": {
                     "type": "integer",
                     "example": 12
@@ -1073,6 +1737,31 @@ const docTemplate = `{
                 "response_ttl_hours": {
                     "type": "integer",
                     "example": 72
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.VerifyRequest": {
+            "type": "object",
+            "properties": {
+                "bot_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_scoring.Breakdown": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "integer"
+                },
+                "experience": {
+                    "type": "integer"
+                },
+                "schedule": {
+                    "type": "integer"
+                },
+                "skills": {
+                    "type": "integer"
                 }
             }
         }

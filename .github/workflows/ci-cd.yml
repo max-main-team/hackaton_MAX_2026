@@ -90,6 +90,9 @@ jobs:
           DATABASE_URL=postgres://postgres:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/maxapp?sslmode=disable
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           MAX_BOT_TOKEN=${{ secrets.MAX_BOT_TOKEN }}
+          AI_API_KEY=${{ secrets.AI_API_KEY }}
+          AI_BASE_URL=https://api.z.ai/api/paas/v4
+          AI_MODEL=glm-4.5-flash
           EOF
 
       - name: Copy compose and env to server

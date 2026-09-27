@@ -56,16 +56,18 @@ func FromCompany(c repository.Company) Company {
 }
 
 type VacancyInput struct {
-	Title               string `json:"title" example:"Go-разработчик"`
-	Description         string `json:"description" example:"Платёжный сервис"`
-	RequiredSkills      string `json:"required_skills" example:"go, postgres"`
-	MinExperienceMonths int    `json:"min_experience_months" example:"12"`
-	City                string `json:"city" example:"Москва"`
-	WorkFormat          string `json:"work_format" enums:"onsite,hybrid,remote" example:"hybrid"`
-	EmploymentType      string `json:"employment_type" enums:"full_time,part_time,contract,internship" example:"full_time"`
-	SalaryMin           *int   `json:"salary_min" example:"180000"`
-	SalaryMax           *int   `json:"salary_max" example:"280000"`
-	ResponseTTLHours    int    `json:"response_ttl_hours" example:"48"`
+	Title               string   `json:"title" example:"Go-разработчик"`
+	Description         string   `json:"description" example:"Платёжный сервис"`
+	RequiredSkills      string   `json:"required_skills" example:"go, postgres"`
+	MinExperienceMonths int      `json:"min_experience_months" example:"12"`
+	City                string   `json:"city" example:"Москва"`
+	WorkFormat          string   `json:"work_format" enums:"onsite,hybrid,remote" example:"hybrid"`
+	EmploymentType      string   `json:"employment_type" enums:"full_time,part_time,contract,internship" example:"full_time"`
+	SalaryMin           *int     `json:"salary_min" example:"180000"`
+	SalaryMax           *int     `json:"salary_max" example:"280000"`
+	ResponseTTLHours    int      `json:"response_ttl_hours" example:"48"`
+	Lat                 *float64 `json:"lat"`
+	Lng                 *float64 `json:"lng"`
 }
 
 type Vacancy struct {
@@ -115,6 +117,8 @@ func FromVacancy(v repository.Vacancy) Vacancy {
 			SalaryMin:           v.SalaryMin,
 			SalaryMax:           v.SalaryMax,
 			ResponseTTLHours:    v.ResponseTTLHours,
+			Lat:                 v.Lat,
+			Lng:                 v.Lng,
 		},
 		ID:        v.ID,
 		CompanyID: v.CompanyID,

@@ -5,10 +5,13 @@ import (
 )
 
 type CandidateItem struct {
-	Score     int               `json:"score" example:"87"`
-	Breakdown scoring.Breakdown `json:"breakdown"`
-	User      User              `json:"user"`
-	Resume    Resume            `json:"resume"`
+	Score      int               `json:"score" example:"87"`
+	FinalScore int               `json:"final_score" example:"85"`
+	AIScore    *int              `json:"ai_score"`
+	AIComment  string            `json:"ai_comment"`
+	Breakdown  scoring.Breakdown `json:"breakdown"`
+	User       User              `json:"user"`
+	Resume     Resume            `json:"resume"`
 }
 
 type CandidatesResponse struct {

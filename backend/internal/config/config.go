@@ -13,6 +13,9 @@ type Config struct {
 	DatabaseURL     string
 	JWTSecret       string
 	MaxBotToken     string
+	AIAPIKey        string
+	AIBaseURL       string
+	AIModel         string
 	ShutdownTimeout time.Duration
 }
 
@@ -30,6 +33,9 @@ func Load() *Config {
 		DatabaseURL:     getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5433/maxapp?sslmode=disable"),
 		JWTSecret:       jwtSecret,
 		MaxBotToken:     os.Getenv("MAX_BOT_TOKEN"),
+		AIAPIKey:        os.Getenv("AI_API_KEY"),
+		AIBaseURL:       getEnv("AI_BASE_URL", "https://api.z.ai/api/paas/v4"),
+		AIModel:         getEnv("AI_MODEL", "glm-4.5-flash"),
 		ShutdownTimeout: 10 * time.Second,
 	}
 }
