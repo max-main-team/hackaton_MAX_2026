@@ -1,0 +1,16 @@
+# окружение
+.env
+*.local
+
+# go
+backend/bin/
+backend/tmp/
+
+# node
+node_modules/
+dist/
+
+# ide / os
+.idea/
+.vscode/
+.DS_Store
