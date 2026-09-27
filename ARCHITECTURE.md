@@ -10,6 +10,9 @@ hackaton_MAX_2026/
 ├── ARCHITECTURE.md            ← этот файл
 ├── README.md                  — быстрый старт: запуск, команды
 ├── docker-compose.yml         — Postgres 17 для локальной разработки (порт 5433)
+├── docker-compose.prod.yml    — прод-стек: postgres + backend + frontend (nginx :80)
+│
+├── .github/workflows/ci-cd.yml — CI/CD: тесты → образы в GHCR → деплой по SSH
 │
 ├── backend/                   — Go 1.27 + Echo v4 + pgx v5 (pgxpool)
 │   ├── cmd/server/            — точка входа: main.go (config → db → migrate → echo)
@@ -24,10 +27,13 @@ hackaton_MAX_2026/
 │   │   ├── repository/        — SQL-слой: user, resume, company, vacancy, matching
 │   │   └── server/            — сборка Echo: middleware, роуты, Start/Shutdown
 │   ├── migrations/            — *.sql, embed; применяются при старте сервера
-│   ├── .env.example, Makefile, Dockerfile
+│   ├── Dockerfile             — multi-stage образ бекенда
+│   ├── .env.example, Makefile
 │
 ├── frontend/                  — React 19 + TypeScript + Vite 8
 │   ├── index.html             — подключает скрипт MAX Bridge
+│   ├── Dockerfile             — node build → nginx (SPA + proxy /api)
+│   ├── nginx.conf             — конфиг nginx для прод-образа
 │   └── src/
 │       ├── main.tsx           — точка входа, RouterProvider [этап 1]
 │       ├── routes/            — экраны по ролям: login, onboarding, candidate/, recruiter/

@@ -30,8 +30,27 @@ frontend/
 │   ├── lib/max.ts       # типизация MAX Bridge (window.WebApp)
 │   ├── lib/api.ts       # клиент бекенда
 │   └── App.tsx          # пример авторизации через initData
+├── Dockerfile           # node build → nginx
+├── nginx.conf           # SPA + прокси /api → backend:8080
 └── vite.config.ts       # dev-прокси /api → localhost:8080
 ```
+
+## Запуск в проде (CI/CD)
+
+Push в `main` триггерит `.github/workflows/ci-cd.yml`:
+
+1. CI: бекенд (`build/vet/test/fmt`) + фронтенд (`lint/build`)
+2. Сборка и пуш образов в GHCR (`hackaton_max_2026/backend|frontend:latest`)
+3. Деплой на сервер по SSH: копирование `docker-compose.prod.yml` + `.env`
+   (рендерится из GitHub Secrets), `docker compose pull && up -d`,
+   проверка `GET /api/v1/health`
+
+Сервер: `/opt/max-miniapp`. Секреты GitHub: `SSH_HOST`, `SSH_USER`,
+`SSH_PRIVATE_KEY`, `POSTGRES_PASSWORD`, `JWT_SECRET`, `MAX_BOT_TOKEN`,
+`GHCR_TOKEN` (PAT с `read:packages` для pull из GHCR).
+
+⚠️ Мини-приложения MAX требуют `https` — для релиза нужен домен +
+TLS-сертификат перед nginx (certbot) либо проксирующий сервис.
 
 ## Запуск в разработке
 
