@@ -7,9 +7,9 @@
 
 | ID   | Задача | Статус | Зависит | Файл |
 |------|--------|--------|---------|------|
-| T-01 | `internal/auth`: initData (Parse/Verify, dev-режим), `JWT_SECRET` | ⬜ | — | [T-01-auth-initdata.md](./T-01-auth-initdata.md) |
-| T-02 | JWT: Issue/Parse + middleware `RequireAuth`, приватная группа | ⬜ | T-01 | [T-02-jwt-requireauth.md](./T-02-jwt-requireauth.md) |
-| T-03 | Новый ответ `/auth` `{token, user}` (⚠️ вместе с T-13) | ⬜ | T-02 | [T-03-auth-response.md](./T-03-auth-response.md) |
+| T-01 | `internal/auth`: initData (Parse/Verify, dev-режим), `JWT_SECRET` | ✅ | — | [T-01-auth-initdata.md](./T-01-auth-initdata.md) |
+| T-02 | JWT: Issue/Parse + middleware `RequireAuth`, приватная группа | ✅ | T-01 | [T-02-jwt-requireauth.md](./T-02-jwt-requireauth.md) |
+| T-03 | Новый ответ `/auth` `{token, user}` (⚠️ вместе с T-13) | ✅ | T-02 | [T-03-auth-response.md](./T-03-auth-response.md) |
 | T-04 | Миграция 000002 + репозитории resume/company/vacancy | ⬜ | — | [T-04-migrations-repos.md](./T-04-migrations-repos.md) |
 | T-05 | `GET /me`, `POST /me/role` | ⬜ | T-02, T-04 | [T-05-me-role.md](./T-05-me-role.md) |
 | T-06 | Резюме: `GET/PUT /my/resume` | ⬜ | T-05 | [T-06-resume-api.md](./T-06-resume-api.md) |

@@ -20,9 +20,9 @@
 
 | ID   | Задача | Статус |
 |------|--------|--------|
-| T-01 | `internal/auth`: initData | ⬜ |
-| T-02 | JWT + `RequireAuth` | ⬜ |
-| T-03 | Новый ответ `/auth` | ⬜ |
+| T-01 | `internal/auth`: initData | ✅ |
+| T-02 | JWT + `RequireAuth` | ✅ |
+| T-03 | Новый ответ `/auth` | ✅ |
 | T-04 | Миграция 000002 + репозитории | ⬜ |
 | T-05 | `/me`, `/me/role` | ⬜ |
 | T-06 | `/my/resume` | ⬜ |

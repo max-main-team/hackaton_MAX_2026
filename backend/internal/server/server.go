@@ -26,6 +26,10 @@ func New(cfg *config.Config, log *slog.Logger, pool *pgxpool.Pool) *Server {
 	s.echo.HideBanner = true
 	s.echo.HidePort = true
 
+	if cfg.MaxBotToken == "" {
+		log.Warn("MAX_BOT_TOKEN is empty: initData signature verification is disabled (dev mode only)")
+	}
+
 	s.setupMiddleware()
 	s.setupRoutes(pool)
 	return s
@@ -45,6 +49,9 @@ func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 	api := s.echo.Group("/api/v1")
 	api.GET("/health", health.Health)
 	api.POST("/auth", auth.Auth)
+
+	private := api.Group("")
+	private.Use(middleware.RequireAuth(s.cfg.JWTSecret))
 }
 
 func (s *Server) Start() error {

@@ -1,18 +1,18 @@
 package handler
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
-	"net/url"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
+	"max-miniapp/backend/internal/auth"
 	"max-miniapp/backend/internal/config"
 	"max-miniapp/backend/internal/repository"
 )
+
+const initDataMaxAge = time.Hour
 
 type AuthHandler struct {
 	users *repository.UserRepo
@@ -28,13 +28,9 @@ type authRequest struct {
 	InitData string `json:"initData"`
 }
 
-type maxUser struct {
-	ID           int64  `json:"id"`
-	Username     string `json:"username"`
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
-	PhotoURL     string `json:"photo_url"`
-	LanguageCode string `json:"language_code"`
+type authResponse struct {
+	Token string          `json:"token"`
+	User  repository.User `json:"user"`
 }
 
 func (h *AuthHandler) Auth(c echo.Context) error {
@@ -46,9 +42,19 @@ func (h *AuthHandler) Auth(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "initData is required")
 	}
 
-	user, err := parseInitData(req.InitData)
+	user, authDate, err := auth.ParseInitData(req.InitData)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "invalid initData")
+	}
+	if time.Since(authDate) > initDataMaxAge {
+		return echo.NewHTTPError(http.StatusUnauthorized, "initData expired")
+	}
+
+	if h.cfg.MaxBotToken != "" {
+		if err := auth.Verify(req.InitData, h.cfg.MaxBotToken); err != nil {
+			h.log.Warn("initData signature check failed", slog.Any("err", err))
+			return echo.NewHTTPError(http.StatusUnauthorized, "invalid initData signature")
+		}
 	}
 
 	saved, err := h.users.UpsertUser(c.Request().Context(), repository.User{
@@ -64,21 +70,11 @@ func (h *AuthHandler) Auth(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
 	}
 
-	return c.JSON(http.StatusOK, saved)
-}
-
-func parseInitData(initData string) (maxUser, error) {
-	values, err := url.ParseQuery(initData)
+	token, err := auth.Issue(saved.ID, h.cfg.JWTSecret, time.Now())
 	if err != nil {
-		return maxUser{}, fmt.Errorf("parse initData: %w", err)
+		h.log.Error("issue token failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
 	}
 
-	var user maxUser
-	if err := json.Unmarshal([]byte(values.Get("user")), &user); err != nil {
-		return maxUser{}, fmt.Errorf("parse user from initData: %w", err)
-	}
-	if user.ID == 0 {
-		return maxUser{}, errors.New("user id is missing in initData")
-	}
-	return user, nil
+	return c.JSON(http.StatusOK, authResponse{Token: token, User: saved})
 }
