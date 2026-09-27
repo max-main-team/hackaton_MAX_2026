@@ -26,3 +26,11 @@
 | T-22 | Верификация компании (диалог токена) | ⬜ | T-16 | [T-22-verification-screen.md](./T-22-verification-screen.md) |
 | T-24 | Рефералка (ссылка + шеринг) | ⬜ | T-14 | [T-24-referral-screen.md](./T-24-referral-screen.md) |
 | T-26 | Карта вакансий (leaflet) | ⬜ | T-14 | [T-26-map-screen.md](./T-26-map-screen.md) |
+
+## Новые фичи
+
+| ID | Задача | Статус | Зависит | Файл |
+|----|--------|--------|---------|------|
+| T-22 | Верификация компании (диалог токена) | ⬜ | T-16 | [T-22-verification-screen.md](./T-22-verification-screen.md) |
+| T-24 | Рефералка (ссылка + шеринг) | ⬜ | T-14 | [T-24-referral-screen.md](./T-24-referral-screen.md) |
+| T-26 | Карта вакансий (leaflet) | ⬜ | T-14 | [T-26-map-screen.md](./T-26-map-screen.md) |

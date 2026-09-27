@@ -22,6 +22,8 @@
     { "action": "read", "resource": "~/*", "effect": "allow" },
     { "action": "edit", "resource": "~/*", "effect": "allow" },
     { "action": "webfetch", "resource": "*", "effect": "allow" },
+    // автономный режим: агент не задаёт вопросов, решает сам
+    { "action": "question", "resource": "*", "effect": "deny" },
     // страховки от необратимых действий
     { "action": "shell", "resource": "sudo *", "effect": "deny" },
     { "action": "shell", "resource": "rm -rf /", "effect": "deny" },
