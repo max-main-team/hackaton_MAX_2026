@@ -174,6 +174,21 @@ func (r *ResumeRepo) TouchConfirmedAt(ctx context.Context, userID int64) error {
 	return nil
 }
 
+// SetConfirmActivity обрабатывает ответ на еженедельный опрос:
+// active=true — подтверждает актуальность, active=false — отключает резюме.
+func (r *ResumeRepo) SetConfirmActivity(ctx context.Context, userID int64, active bool) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE resumes
+		SET is_active         = $2,
+		    last_confirmed_at = CASE WHEN $2 THEN now() ELSE last_confirmed_at END
+		WHERE user_id = $1
+	`, userID, active)
+	if err != nil {
+		return fmt.Errorf("set confirm activity: %w", err)
+	}
+	return nil
+}
+
 func (r *ResumeRepo) ListVersions(ctx context.Context, userID int64) ([]ResumeVersion, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT id, user_id, snapshot::text, source, created_at

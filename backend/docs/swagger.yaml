@@ -1,0 +1,732 @@
+basePath: /
+definitions:
+  max-miniapp_backend_internal_dto.AuthRequest:
+    properties:
+      initData:
+        example: user=%7B%22id%22%3A42%7D&auth_date=1771409719&hash=...
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.AuthResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIs...
+        type: string
+      user:
+        $ref: '#/definitions/max-miniapp_backend_internal_dto.User'
+    type: object
+  max-miniapp_backend_internal_dto.Company:
+    properties:
+      address:
+        example: Москва, ул. Тверская, 1
+        type: string
+      created_at:
+        type: string
+      description:
+        example: ИТ-компания
+        type: string
+      id:
+        type: integer
+      logo_url:
+        type: string
+      name:
+        example: Ромашка
+        type: string
+      position:
+        enum:
+        - owner
+        - hr
+        - employee
+        example: owner
+        type: string
+      updated_at:
+        type: string
+      verified:
+        type: boolean
+      website:
+        example: https://romashka.ru
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.CompanyInput:
+    properties:
+      address:
+        example: Москва, ул. Тверская, 1
+        type: string
+      description:
+        example: ИТ-компания
+        type: string
+      logo_url:
+        type: string
+      name:
+        example: Ромашка
+        type: string
+      position:
+        enum:
+        - owner
+        - hr
+        - employee
+        example: owner
+        type: string
+      website:
+        example: https://romashka.ru
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.ConfirmActivityRequest:
+    properties:
+      active:
+        example: true
+        type: boolean
+    type: object
+  max-miniapp_backend_internal_dto.ErrorResponse:
+    properties:
+      message:
+        example: invalid request body
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.MeResponse:
+    properties:
+      personal_data_accepted_at:
+        type: string
+      user:
+        $ref: '#/definitions/max-miniapp_backend_internal_dto.User'
+    type: object
+  max-miniapp_backend_internal_dto.Resume:
+    properties:
+      about:
+        example: Пишу сервисы на Go
+        type: string
+      city:
+        example: Москва
+        type: string
+      created_at:
+        type: string
+      education:
+        example: МГТУ, ИТ-факультет
+        type: string
+      employment_type:
+        enum:
+        - full_time
+        - part_time
+        - contract
+        - internship
+        example: full_time
+        type: string
+      experience_months:
+        example: 36
+        type: integer
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      last_confirmed_at:
+        type: string
+      links:
+        items:
+          type: object
+        type: array
+      salary_max:
+        example: 250000
+        type: integer
+      salary_min:
+        example: 150000
+        type: integer
+      skills:
+        example: go, postgres, docker
+        type: string
+      source:
+        enum:
+        - manual
+        - file_parse
+        type: string
+      source_text:
+        type: string
+      title:
+        example: Backend-разработчик
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+      work_format:
+        enum:
+        - onsite
+        - hybrid
+        - remote
+        example: remote
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.ResumeInput:
+    properties:
+      about:
+        example: Пишу сервисы на Go
+        type: string
+      city:
+        example: Москва
+        type: string
+      education:
+        example: МГТУ, ИТ-факультет
+        type: string
+      employment_type:
+        enum:
+        - full_time
+        - part_time
+        - contract
+        - internship
+        example: full_time
+        type: string
+      experience_months:
+        example: 36
+        type: integer
+      links:
+        items:
+          type: object
+        type: array
+      salary_max:
+        example: 250000
+        type: integer
+      salary_min:
+        example: 150000
+        type: integer
+      skills:
+        example: go, postgres, docker
+        type: string
+      title:
+        example: Backend-разработчик
+        type: string
+      work_format:
+        enum:
+        - onsite
+        - hybrid
+        - remote
+        example: remote
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.RoleRequest:
+    properties:
+      acceptPersonalData:
+        example: true
+        type: boolean
+      role:
+        enum:
+        - candidate
+        - recruiter
+        example: candidate
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.User:
+    properties:
+      created_at:
+        type: string
+      first_name:
+        example: Ivan
+        type: string
+      id:
+        example: 42
+        type: integer
+      language_code:
+        example: ru
+        type: string
+      last_name:
+        example: Petrov
+        type: string
+      photo_url:
+        type: string
+      role:
+        example: candidate
+        type: string
+      updated_at:
+        type: string
+      username:
+        example: ivan
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.Vacancy:
+    properties:
+      city:
+        example: Москва
+        type: string
+      company_id:
+        type: integer
+      created_at:
+        type: string
+      description:
+        example: Платёжный сервис
+        type: string
+      employment_type:
+        enum:
+        - full_time
+        - part_time
+        - contract
+        - internship
+        example: full_time
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      min_experience_months:
+        example: 12
+        type: integer
+      required_skills:
+        example: go, postgres
+        type: string
+      response_ttl_hours:
+        example: 48
+        type: integer
+      salary_max:
+        example: 280000
+        type: integer
+      salary_min:
+        example: 180000
+        type: integer
+      title:
+        example: Go-разработчик
+        type: string
+      updated_at:
+        type: string
+      work_format:
+        enum:
+        - onsite
+        - hybrid
+        - remote
+        example: hybrid
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.VacancyInput:
+    properties:
+      city:
+        example: Москва
+        type: string
+      description:
+        example: Платёжный сервис
+        type: string
+      employment_type:
+        enum:
+        - full_time
+        - part_time
+        - contract
+        - internship
+        example: full_time
+        type: string
+      min_experience_months:
+        example: 12
+        type: integer
+      required_skills:
+        example: go, postgres
+        type: string
+      response_ttl_hours:
+        example: 48
+        type: integer
+      salary_max:
+        example: 280000
+        type: integer
+      salary_min:
+        example: 180000
+        type: integer
+      title:
+        example: Go-разработчик
+        type: string
+      work_format:
+        enum:
+        - onsite
+        - hybrid
+        - remote
+        example: hybrid
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.VacancyUpdate:
+    properties:
+      is_active:
+        type: boolean
+      min_experience_months:
+        type: integer
+      response_ttl_hours:
+        example: 72
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: |-
+    API мини-приложения реверс-найма в MAX.
+    Авторизация: POST /api/v1/auth c initData из MAX Bridge,
+    далее заголовок Authorization: Bearer <token> (JWT, 7 дней).
+  title: MAX Mini App — Reverse Hiring API
+  version: "1.0"
+paths:
+  /api/v1/auth:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Принимает window.WebApp.initData, проверяет подпись (токен бота),
+        срок давности, апсертит пользователя и выдаёт JWT (7 дней).
+      parameters:
+      - description: initData из MAX Bridge
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      summary: Авторизация по initData
+      tags:
+      - auth
+  /api/v1/companies:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: компания + позиция создателя
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.CompanyInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.Company'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать компанию
+      tags:
+      - company
+  /api/v1/companies/{id}/vacancies:
+    get:
+      parameters:
+      - description: ID компании
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/max-miniapp_backend_internal_dto.Vacancy'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Вакансии компании
+      tags:
+      - vacancy
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID компании
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: вакансия
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.VacancyInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.Vacancy'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать вакансию
+      tags:
+      - vacancy
+  /api/v1/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.MeResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Текущий пользователь
+      tags:
+      - profile
+  /api/v1/me/role:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: роль и согласие
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.RoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.MeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Выбор роли (+ согласие на обработку ПДн)
+      tags:
+      - profile
+  /api/v1/my/companies:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/max-miniapp_backend_internal_dto.Company'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Мои компании
+      tags:
+      - company
+  /api/v1/my/resume:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.Resume'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Моё резюме
+      tags:
+      - resume
+    put:
+      consumes:
+      - application/json
+      description: |-
+        При каждом сохранении пишется снапшот в resume_versions.
+        Ручное редактирование не затирает распарсенный source_text.
+      parameters:
+      - description: резюме
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.ResumeInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.Resume'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать/обновить резюме
+      tags:
+      - resume
+  /api/v1/my/resume/confirm-activity:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: active
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.ConfirmActivityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.Resume'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Подтвердить актуальность подбора
+      tags:
+      - resume
+  /api/v1/vacancies/{id}:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID вакансии
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: изменяемые поля
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.VacancyUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.Vacancy'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить вакансию
+      tags:
+      - vacancy
+securityDefinitions:
+  BearerAuth:
+    description: 'Значение: "Bearer <jwt>"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

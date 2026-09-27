@@ -19,6 +19,7 @@ type User struct {
 	LastName     string    `json:"last_name"`
 	PhotoURL     string    `json:"photo_url"`
 	LanguageCode string    `json:"language_code"`
+	Role         string    `json:"role"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -42,13 +43,13 @@ func (r *UserRepo) UpsertUser(ctx context.Context, u User) (User, error) {
 			photo_url     = EXCLUDED.photo_url,
 			language_code = EXCLUDED.language_code,
 			updated_at    = now()
-		RETURNING id, username, first_name, last_name, photo_url, language_code, created_at, updated_at
+		RETURNING id, username, first_name, last_name, photo_url, language_code, COALESCE(role, '') AS role, created_at, updated_at
 	`, u.ID, u.Username, u.FirstName, u.LastName, u.PhotoURL, u.LanguageCode)
 
 	var saved User
 	if err := row.Scan(
 		&saved.ID, &saved.Username, &saved.FirstName,
-		&saved.LastName, &saved.PhotoURL, &saved.LanguageCode,
+		&saved.LastName, &saved.PhotoURL, &saved.LanguageCode, &saved.Role,
 		&saved.CreatedAt, &saved.UpdatedAt,
 	); err != nil {
 		return User{}, fmt.Errorf("upsert user: %w", err)
@@ -58,7 +59,7 @@ func (r *UserRepo) UpsertUser(ctx context.Context, u User) (User, error) {
 
 func (r *UserRepo) GetByID(ctx context.Context, id int64) (User, error) {
 	row := r.pool.QueryRow(ctx, `
-		SELECT id, username, first_name, last_name, photo_url, language_code, created_at, updated_at
+		SELECT id, username, first_name, last_name, photo_url, language_code, COALESCE(role, '') AS role, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`, id)
@@ -66,7 +67,7 @@ func (r *UserRepo) GetByID(ctx context.Context, id int64) (User, error) {
 	var u User
 	err := row.Scan(
 		&u.ID, &u.Username, &u.FirstName,
-		&u.LastName, &u.PhotoURL, &u.LanguageCode,
+		&u.LastName, &u.PhotoURL, &u.LanguageCode, &u.Role,
 		&u.CreatedAt, &u.UpdatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -76,6 +77,17 @@ func (r *UserRepo) GetByID(ctx context.Context, id int64) (User, error) {
 		return User{}, fmt.Errorf("get user by id: %w", err)
 	}
 	return u, nil
+}
+
+// UpdateRole меняет роль пользователя (candidate/recruiter).
+func (r *UserRepo) UpdateRole(ctx context.Context, id int64, role string) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE users SET role = $2, updated_at = now() WHERE id = $1
+	`, id, role)
+	if err != nil {
+		return fmt.Errorf("update role: %w", err)
+	}
+	return nil
 }
 
 const ConsentPersonalData = "personal_data"

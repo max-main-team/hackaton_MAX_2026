@@ -9,6 +9,7 @@ import (
 
 	"max-miniapp/backend/internal/auth"
 	"max-miniapp/backend/internal/config"
+	"max-miniapp/backend/internal/dto"
 	"max-miniapp/backend/internal/repository"
 )
 
@@ -24,17 +25,22 @@ func NewAuthHandler(users *repository.UserRepo, cfg *config.Config, log *slog.Lo
 	return &AuthHandler{users: users, cfg: cfg, log: log}
 }
 
-type authRequest struct {
-	InitData string `json:"initData"`
-}
-
-type authResponse struct {
-	Token string          `json:"token"`
-	User  repository.User `json:"user"`
-}
-
+// Auth авторизует пользователя мини-приложения по initData из MAX Bridge.
+//
+//	@Summary     Авторизация по initData
+//	@Description Принимает window.WebApp.initData, проверяет подпись (токен бота),
+//	@Description  срок давности, апсертит пользователя и выдаёт JWT (7 дней).
+//	@Tags        auth
+//	@Accept      json
+//	@Produce     json
+//	@Param       request body dto.AuthRequest true "initData из MAX Bridge"
+//	@Success     200 {object} dto.AuthResponse
+//	@Failure     400 {object} dto.ErrorResponse
+//	@Failure     401 {object} dto.ErrorResponse
+//	@Failure     500 {object} dto.ErrorResponse
+//	@Router      /api/v1/auth [post]
 func (h *AuthHandler) Auth(c echo.Context) error {
-	var req authRequest
+	var req dto.AuthRequest
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
@@ -76,5 +82,5 @@ func (h *AuthHandler) Auth(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
 	}
 
-	return c.JSON(http.StatusOK, authResponse{Token: token, User: saved})
+	return c.JSON(http.StatusOK, dto.AuthResponse{Token: token, User: dto.FromUser(saved)})
 }

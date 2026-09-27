@@ -3,12 +3,13 @@ package server
 import (
 	"context"
 	"log/slog"
+	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 
-	apidocs "max-miniapp/backend/api"
 	"max-miniapp/backend/internal/config"
 	"max-miniapp/backend/internal/handler"
 	"max-miniapp/backend/internal/middleware"
@@ -45,17 +46,37 @@ func (s *Server) setupMiddleware() {
 func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 	health := handler.NewHealthHandler(pool, s.log)
 	users := repository.NewUserRepo(pool)
-	auth := handler.NewAuthHandler(users, s.cfg, s.log)
+	resumes := repository.NewResumeRepo(pool)
+	companies := repository.NewCompanyRepo(pool)
+	vacancies := repository.NewVacancyRepo(pool)
 
-	s.echo.GET("/api/openapi.yaml", apidocs.OpenAPIYAML)
-	s.echo.GET("/api/docs", apidocs.SwaggerUI)
+	authH := handler.NewAuthHandler(users, s.cfg, s.log)
+	meH := handler.NewMeHandler(users, s.log)
+	resumeH := handler.NewResumeHandler(resumes, s.log)
+	companyH := handler.NewCompanyHandler(companies, vacancies, s.log)
+	vacancyH := handler.NewVacancyHandler(companies, vacancies, s.log)
+
+	s.echo.GET("/swagger/*any", echoSwagger.EchoWrapHandler())
+	s.echo.GET("/api/docs", func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+	})
 
 	api := s.echo.Group("/api/v1")
 	api.GET("/health", health.Health)
-	api.POST("/auth", auth.Auth)
+	api.POST("/auth", authH.Auth)
 
 	private := api.Group("")
 	private.Use(middleware.RequireAuth(s.cfg.JWTSecret))
+	private.GET("/me", meH.Me)
+	private.POST("/me/role", meH.SetRole)
+	private.GET("/my/resume", resumeH.Get)
+	private.PUT("/my/resume", resumeH.Put)
+	private.POST("/my/resume/confirm-activity", resumeH.ConfirmActivity)
+	private.POST("/companies", companyH.Create)
+	private.GET("/my/companies", companyH.ListMine)
+	private.GET("/companies/:id/vacancies", companyH.VacancyList)
+	private.POST("/companies/:id/vacancies", companyH.VacancyCreate)
+	private.PATCH("/vacancies/:id", vacancyH.Update)
 }
 
 func (s *Server) Start() error {

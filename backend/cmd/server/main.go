@@ -10,11 +10,23 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "max-miniapp/backend/docs"
+
 	"max-miniapp/backend/internal/config"
 	"max-miniapp/backend/internal/database"
 	"max-miniapp/backend/internal/server"
 )
 
+// @title           MAX Mini App — Reverse Hiring API
+// @version         1.0
+// @description     API мини-приложения реверс-найма в MAX.
+// @description     Авторизация: POST /api/v1/auth c initData из MAX Bridge,
+// @description     далее заголовок Authorization: Bearer <token> (JWT, 7 дней).
+// @BasePath        /
+// @securityDefinitions.apikey BearerAuth
+// @in                          header
+// @name                        Authorization
+// @description                 Значение: "Bearer <jwt>"
 func main() {
 	if err := run(); err != nil {
 		slog.Error("fatal", slog.Any("err", err))

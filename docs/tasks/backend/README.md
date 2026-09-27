@@ -11,9 +11,9 @@
 | T-02 | JWT: Issue/Parse + middleware `RequireAuth`, приватная группа | ✅ | T-01 | [T-02-jwt-requireauth.md](./T-02-jwt-requireauth.md) |
 | T-03 | Новый ответ `/auth` `{token, user}` (⚠️ вместе с T-13) | ✅ | T-02 | [T-03-auth-response.md](./T-03-auth-response.md) |
 | T-04 | Миграция 000003 (домен) + репозитории resume/company/vacancy | ✅ | — | [T-04-migrations-repos.md](./T-04-migrations-repos.md) |
-| T-05 | `GET /me`, `POST /me/role` | ⬜ | T-02, T-04 | [T-05-me-role.md](./T-05-me-role.md) |
-| T-06 | Резюме: `GET/PUT /my/resume` | ⬜ | T-05 | [T-06-resume-api.md](./T-06-resume-api.md) |
-| T-07 | Компания и вакансии: create/list/patch | ⬜ | T-05 | [T-07-company-vacancy-api.md](./T-07-company-vacancy-api.md) |
+| T-05 | `GET /me`, `POST /me/role` | ✅ | T-02, T-04 | [T-05-me-role.md](./T-05-me-role.md) |
+| T-06 | Резюме: `GET/PUT /my/resume` | ✅ | T-05 | [T-06-resume-api.md](./T-06-resume-api.md) |
+| T-07 | Компания и вакансии: create/list/patch | ✅ | T-05 | [T-07-company-vacancy-api.md](./T-07-company-vacancy-api.md) |
 
 ## Этап 2 — матчинг и взаимодействие
 
