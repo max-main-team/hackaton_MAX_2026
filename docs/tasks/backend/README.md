@@ -21,8 +21,8 @@
 |------|--------|--------|---------|------|
 | T-08 | `internal/scoring` + тесты | ✅ | T-04 | [T-08-scoring.md](./T-08-scoring.md) |
 | T-09 | Выдача кандидатов `GET /vacancies/{id}/candidates` (list/feed) | ✅ | T-07, T-08 | [T-09-candidates-api.md](./T-09-candidates-api.md) |
-| T-10 | Действия рекрутера `POST .../action` (миграция 000004) | ⬜ | T-09 | [T-10-recruiter-action.md](./T-10-recruiter-action.md) |
-| T-11 | Приглашения: `GET /my/invitations`, `POST /invitations/{id}/respond` | ⬜ | T-10 | [T-11-invitations.md](./T-11-invitations.md) |
+| T-10 | Действия рекрутера `POST .../action` (миграция 000004) | ✅ | T-09 | [T-10-recruiter-action.md](./T-10-recruiter-action.md) |
+| T-11 | Приглашения: `GET /my/invitations`, `POST /invitations/{id}/respond` | ✅ | T-10 | [T-11-invitations.md](./T-11-invitations.md) |
 
 ## Этап 3 — уведомления и сиды
 

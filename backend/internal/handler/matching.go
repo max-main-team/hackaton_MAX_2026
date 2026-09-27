@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -14,23 +15,26 @@ import (
 	"max-miniapp/backend/internal/scoring"
 )
 
-type CandidatesHandler struct {
+type MatchingHandler struct {
 	companies *repository.CompanyRepo
 	vacancies *repository.VacancyRepo
 	users     *repository.UserRepo
 	resumes   *repository.ResumeRepo
+	matching  *repository.MatchingRepo
 	log       *slog.Logger
 }
 
-func NewCandidatesHandler(
+func NewMatchingHandler(
 	companies *repository.CompanyRepo,
 	vacancies *repository.VacancyRepo,
 	users *repository.UserRepo,
 	resumes *repository.ResumeRepo,
+	matching *repository.MatchingRepo,
 	log *slog.Logger,
-) *CandidatesHandler {
-	return &CandidatesHandler{
-		companies: companies, vacancies: vacancies, users: users, resumes: resumes, log: log,
+) *MatchingHandler {
+	return &MatchingHandler{
+		companies: companies, vacancies: vacancies, users: users,
+		resumes: resumes, matching: matching, log: log,
 	}
 }
 
@@ -38,7 +42,7 @@ func NewCandidatesHandler(
 //
 //	@Summary     Кандидаты под вакансию
 //	@Description mode=list — постранично (limit/offset), mode=feed — лента без пагинации.
-//	@Description Только кандидаты с активным резюме. Сортировка по score.
+//	@Description Только кандидаты с активным резюме и без действия по этой вакансии.
 //	@Tags        matching
 //	@Produce     json
 //	@Param       id     path integer true "ID вакансии"
@@ -54,7 +58,7 @@ func NewCandidatesHandler(
 //	@Failure     500 {object} dto.ErrorResponse
 //	@Security    BearerAuth
 //	@Router      /api/v1/vacancies/{id}/candidates [get]
-func (h *CandidatesHandler) Candidates(c echo.Context) error {
+func (h *MatchingHandler) Candidates(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
@@ -105,6 +109,14 @@ func (h *CandidatesHandler) Candidates(c echo.Context) error {
 		if r.UserID == userID {
 			continue
 		}
+		hasAction, err := h.matching.HasActionForVacancy(ctx, vacancyID, r.UserID)
+		if err != nil {
+			h.log.Error("check action failed", slog.Any("err", err))
+			return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+		}
+		if hasAction {
+			continue
+		}
 		user, err := h.users.GetByID(ctx, r.UserID)
 		if err != nil || user.Role != "candidate" {
 			continue
@@ -152,4 +164,194 @@ func (h *CandidatesHandler) Candidates(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, resp)
+}
+
+// Action фиксирует действие рекрутера на кандидата (invite/skip).
+//
+//	@Summary     Действие рекрутера на кандидата
+//	@Tags        matching
+//	@Accept      json
+//	@Produce     json
+//	@Param       id              path integer true "ID вакансии"
+//	@Param       candidateUserId path integer true "ID кандидата"
+//	@Param       request body dto.RecruiterActionResponse true "action"
+//	@Success     200 {object} dto.RecruiterActionResponse
+//	@Failure     400 {object} dto.ErrorResponse
+//	@Failure     401 {object} dto.ErrorResponse
+//	@Failure     403 {object} dto.ErrorResponse
+//	@Failure     500 {object} dto.ErrorResponse
+//	@Security    BearerAuth
+//	@Router      /api/v1/vacancies/{id}/candidates/{candidateUserId}/action [post]
+func (h *MatchingHandler) Action(c echo.Context) error {
+	userID, err := middleware.UserIDFromContext(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	vacancyID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid vacancy id")
+	}
+	candidateID, err := strconv.ParseInt(c.Param("candidateUserId"), 10, 64)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid candidate id")
+	}
+
+	var in dto.RecruiterActionResponse
+	if err := c.Bind(&in); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+	if in.Action != "invite" && in.Action != "skip" {
+		return echo.NewHTTPError(http.StatusBadRequest, "action must be invite or skip")
+	}
+
+	ctx := c.Request().Context()
+	vacancy, err := h.vacancies.GetByID(ctx, vacancyID)
+	if err != nil {
+		h.log.Error("get vacancy failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusNotFound, "vacancy not found")
+	}
+	isMember, err := h.companies.IsMember(ctx, vacancy.CompanyID, userID)
+	if err != nil {
+		h.log.Error("check membership failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+	if !isMember {
+		return echo.NewHTTPError(http.StatusForbidden, "not a member of this company")
+	}
+
+	action, err := h.matching.GetOrCreateAction(ctx, vacancyID, userID, candidateID, in.Action)
+	if err != nil {
+		h.log.Error("create action failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+
+	return c.JSON(http.StatusOK, dto.RecruiterActionResponse{
+		ID: action.ID, Action: action.Action, CreatedAt: action.CreatedAt,
+	})
+}
+
+// Invitations возвращает приглашения текущего кандидата со статусами TTL.
+//
+//	@Summary     Мои приглашения
+//	@Tags        invitations
+//	@Produce     json
+//	@Success     200 {array} dto.Invitation
+//	@Failure     401 {object} dto.ErrorResponse
+//	@Failure     500 {object} dto.ErrorResponse
+//	@Security    BearerAuth
+//	@Router      /api/v1/my/invitations [get]
+func (h *MatchingHandler) Invitations(c echo.Context) error {
+	userID, err := middleware.UserIDFromContext(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	details, err := h.matching.ListInvitationsByCandidate(c.Request().Context(), userID)
+	if err != nil {
+		h.log.Error("list invitations failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+
+	now := time.Now()
+	rank := map[string]int{"pending": 0, "overdue": 1, "responded": 2}
+	out := make([]dto.Invitation, 0, len(details))
+	for _, d := range details {
+		deadline := d.CreatedAt.Add(time.Duration(d.TTLHours) * time.Hour)
+		status, hoursLeft := "responded", 0.0
+		switch {
+		case d.Response != nil:
+		case now.After(deadline):
+			status = "overdue"
+		default:
+			status = "pending"
+			hoursLeft = deadline.Sub(now).Hours()
+		}
+		out = append(out, dto.Invitation{
+			ID:         d.ActionID,
+			Status:     status,
+			DeadlineAt: deadline,
+			HoursLeft:  hoursLeft,
+			Company:    dto.InvitationCompany{ID: d.CompanyID, Name: d.CompanyName, Verified: d.CompanyVerified},
+			Vacancy:    dto.InvitationVacancy{ID: d.VacancyID, Title: d.VacancyTitle, City: d.VacancyCity},
+			Response:   d.Response,
+		})
+	}
+
+	sort.SliceStable(out, func(i, j int) bool {
+		if rank[out[i].Status] != rank[out[j].Status] {
+			return rank[out[i].Status] < rank[out[j].Status]
+		}
+		return out[i].DeadlineAt.Before(out[j].DeadlineAt)
+	})
+
+	return c.JSON(http.StatusOK, out)
+}
+
+// Respond — ответ кандидата на приглашение (accept создаёт матч).
+//
+//	@Summary     Ответить на приглашение
+//	@Tags        invitations
+//	@Accept      json
+//	@Produce     json
+//	@Param       id     path integer true "ID приглашения"
+//	@Param       request body dto.RespondRequest true "ответ"
+//	@Success     200 {object} dto.MatchResult
+//	@Failure     400 {object} dto.ErrorResponse
+//	@Failure     401 {object} dto.ErrorResponse
+//	@Failure     403 {object} dto.ErrorResponse
+//	@Failure     404 {object} dto.ErrorResponse
+//	@Failure     409 {object} dto.ErrorResponse
+//	@Failure     500 {object} dto.ErrorResponse
+//	@Security    BearerAuth
+//	@Router      /api/v1/invitations/{id}/respond [post]
+func (h *MatchingHandler) Respond(c echo.Context) error {
+	userID, err := middleware.UserIDFromContext(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	actionID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid invitation id")
+	}
+
+	var in dto.RespondRequest
+	if err := c.Bind(&in); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+	if in.Response != "accept" && in.Response != "decline" {
+		return echo.NewHTTPError(http.StatusBadRequest, "response must be accept or decline")
+	}
+
+	ctx := c.Request().Context()
+	detail, err := h.matching.GetInvitationDetail(ctx, actionID)
+	if err != nil {
+		h.log.Error("get invitation failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusNotFound, "invitation not found")
+	}
+	if detail.CandidateUserID != userID {
+		return echo.NewHTTPError(http.StatusForbidden, "not your invitation")
+	}
+	if detail.Response != nil {
+		return echo.NewHTTPError(http.StatusConflict, "already responded")
+	}
+	deadline := detail.CreatedAt.Add(time.Duration(detail.TTLHours) * time.Hour)
+	if time.Now().After(deadline) {
+		return echo.NewHTTPError(http.StatusConflict, "invitation expired")
+	}
+
+	if err := h.matching.CreateResponse(ctx, actionID, in.Response); err != nil {
+		h.log.Error("create response failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+
+	result := dto.MatchResult{
+		ID:               actionID,
+		Response:         in.Response,
+		Company:          dto.InvitationCompany{ID: detail.CompanyID, Name: detail.CompanyName, Verified: detail.CompanyVerified},
+		Vacancy:          dto.InvitationVacancy{ID: detail.VacancyID, Title: detail.VacancyTitle, City: detail.VacancyCity},
+		RecruiterContact: detail.RecruiterLogin,
+	}
+	return c.JSON(http.StatusOK, result)
 }
