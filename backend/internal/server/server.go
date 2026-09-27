@@ -59,6 +59,7 @@ func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 	resumeH := handler.NewResumeHandler(resumes, s.log)
 	companyH := handler.NewCompanyHandler(companies, vacancies, s.log)
 	vacancyH := handler.NewVacancyHandler(companies, vacancies, s.log)
+	candidatesH := handler.NewCandidatesHandler(companies, vacancies, users, resumes, s.log)
 
 	s.echo.GET("/swagger/*any", echoSwagger.EchoWrapHandler())
 	s.echo.GET("/api/docs", func(c echo.Context) error {
@@ -81,6 +82,7 @@ func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 	private.GET("/companies/:id/vacancies", companyH.VacancyList)
 	private.POST("/companies/:id/vacancies", companyH.VacancyCreate)
 	private.PATCH("/vacancies/:id", vacancyH.Update)
+	private.GET("/vacancies/:id/candidates", candidatesH.Candidates)
 }
 
 func (s *Server) Start() error {
