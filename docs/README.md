@@ -11,15 +11,25 @@ docs/
 ├── common/
 │   ├── idea.md           — общая идея продукта
 │   ├── features.md       — список фич: основные и второстепенные
-│   └── plan.md           — план: скоуп хакатона, этапы, задачи бек/фронт
+│   ├── plan.md           — план: скоуп хакатона, этапы, задачи бек/фронт
+│   └── tasks.md          — тикеты T-01…T-20 в порядке реализации (стартовая точка для ИИ)
 ├── backend/
 │   ├── architecture.md   — слои, поток запроса, конфиг, запуск
-│   ├── api.md            — спецификация HTTP-эндпоинтов
-│   └── database.md       — схема БД, конвенции миграций
+│   ├── api.md            — спецификация HTTP-эндпоинтов (текущее состояние)
+│   ├── database.md       — схема БД, конвенции миграций
+│   ├── spec-auth.md      — SPECS: initData-подпись, JWT, RequireAuth
+│   ├── spec-domain.md    — SPECS: миграции 000002/000003, репозитории
+│   ├── spec-api.md       — SPECS: полный контракт API v1 (целевое состояние)
+│   └── spec-matching.md  — SPECS: скоринг, TTL, еженедельный опрос
 └── frontend/
     ├── architecture.md   — структура, прокси, команды
-    └── max-bridge.md     — интеграция с MAX (window.WebApp, initData)
+    ├── max-bridge.md     — интеграция с MAX (window.WebApp, initData)
+    └── spec-ui.md        — SPECS: роуты, экраны, компоненты, API-биндинги
 ```
+
+Файлы `architecture.md`/`api.md`/`database.md` описывают код **как есть**;
+файлы `spec-*.md` — **целевое** состояние MVP, по ним ИИ имплементит
+тикет из `common/tasks.md`.
 
 ## Кратко о проекте
 
