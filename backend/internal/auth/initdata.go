@@ -35,7 +35,11 @@ func ParseInitData(raw string) (InitDataUser, time.Time, error) {
 	}
 
 	var user InitDataUser
-	if err := json.Unmarshal([]byte(values.Get("user")), &user); err != nil {
+	rawUser := values.Get("user")
+	if rawUser == "" {
+		return InitDataUser{}, time.Time{}, errors.New("user is missing in init data")
+	}
+	if err := json.Unmarshal([]byte(rawUser), &user); err != nil {
 		return InitDataUser{}, time.Time{}, fmt.Errorf("parse user from init data: %w", err)
 	}
 	if user.ID == 0 {

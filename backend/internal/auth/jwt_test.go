@@ -3,6 +3,9 @@ package auth
 import (
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const testSecret = "test-secret"
@@ -11,41 +14,30 @@ func TestJWTRoundtrip(t *testing.T) {
 	now := time.Now()
 
 	token, err := Issue(42, testSecret, now)
-	if err != nil {
-		t.Fatalf("issue: %v", err)
-	}
+	require.NoError(t, err)
 
 	got, err := Parse(token, testSecret)
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-	if got != 42 {
-		t.Fatalf("want user id 42, got %d", got)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, int64(42), got)
 }
 
 func TestJWTParseWrongSecret(t *testing.T) {
 	token, err := Issue(42, testSecret, time.Now())
-	if err != nil {
-		t.Fatalf("issue: %v", err)
-	}
-	if _, err := Parse(token, "other-secret"); err == nil {
-		t.Fatal("expected error for wrong secret, got nil")
-	}
+	require.NoError(t, err)
+
+	_, err = Parse(token, "other-secret")
+	assert.Error(t, err)
 }
 
 func TestJWTParseExpired(t *testing.T) {
 	token, err := Issue(42, testSecret, time.Now().Add(-8*24*time.Hour))
-	if err != nil {
-		t.Fatalf("issue: %v", err)
-	}
-	if _, err := Parse(token, testSecret); err == nil {
-		t.Fatal("expected error for expired token, got nil")
-	}
+	require.NoError(t, err)
+
+	_, err = Parse(token, testSecret)
+	assert.Error(t, err)
 }
 
 func TestJWTParseGarbage(t *testing.T) {
-	if _, err := Parse("not-a-token", testSecret); err == nil {
-		t.Fatal("expected error for garbage token, got nil")
-	}
+	_, err := Parse("not-a-token", testSecret)
+	assert.Error(t, err)
 }

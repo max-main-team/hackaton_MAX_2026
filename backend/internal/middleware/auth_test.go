@@ -7,15 +7,15 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"max-miniapp/backend/internal/auth"
 )
 
 func TestRequireAuthAllowsValidToken(t *testing.T) {
 	token, err := auth.Issue(42, "secret", time.Now())
-	if err != nil {
-		t.Fatalf("issue: %v", err)
-	}
+	require.NoError(t, err)
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
@@ -23,23 +23,17 @@ func TestRequireAuthAllowsValidToken(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
+	var gotID int64
 	handler := RequireAuth("secret")(func(c echo.Context) error {
 		id, err := UserIDFromContext(c)
-		if err != nil {
-			t.Fatalf("user id from context: %v", err)
-		}
-		if id != 42 {
-			t.Fatalf("want 42, got %d", id)
-		}
+		require.NoError(t, err)
+		gotID = id
 		return c.NoContent(http.StatusOK)
 	})
 
-	if err := handler(c); err != nil {
-		t.Fatalf("handler: %v", err)
-	}
-	if rec.Code != http.StatusOK {
-		t.Fatalf("want 200, got %d", rec.Code)
-	}
+	require.NoError(t, handler(c))
+	assert.Equal(t, int64(42), gotID)
+	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
 func TestRequireAuthRejectsMissingToken(t *testing.T) {
@@ -53,13 +47,11 @@ func TestRequireAuthRejectsMissingToken(t *testing.T) {
 	})
 
 	err := handler(c)
-	if err == nil {
-		t.Fatal("expected error for missing token, got nil")
-	}
+	require.Error(t, err)
+
 	httpErr, ok := err.(*echo.HTTPError)
-	if !ok || httpErr.Code != http.StatusUnauthorized {
-		t.Fatalf("want 401 HTTPError, got %v", err)
-	}
+	require.True(t, ok)
+	assert.Equal(t, http.StatusUnauthorized, httpErr.Code)
 }
 
 func TestRequireAuthRejectsBadToken(t *testing.T) {
@@ -74,11 +66,9 @@ func TestRequireAuthRejectsBadToken(t *testing.T) {
 	})
 
 	err := handler(c)
-	if err == nil {
-		t.Fatal("expected error for bad token, got nil")
-	}
+	require.Error(t, err)
+
 	httpErr, ok := err.(*echo.HTTPError)
-	if !ok || httpErr.Code != http.StatusUnauthorized {
-		t.Fatalf("want 401 HTTPError, got %v", err)
-	}
+	require.True(t, ok)
+	assert.Equal(t, http.StatusUnauthorized, httpErr.Code)
 }
