@@ -18,3 +18,11 @@
 |------|--------|--------|---------|------|
 | T-17 | Свайп-лента + список кандидатов (`UserCard`, `Badge`) | ⬜ | T-16 | [T-17-feed-list.md](./T-17-feed-list.md) |
 | T-18 | Приглашения: `Countdown`, ответ, матч-экран | ⬜ | T-17 | [T-18-invitations-screen.md](./T-18-invitations-screen.md) |
+
+## Новые фичи
+
+| ID | Задача | Статус | Зависит | Файл |
+|----|--------|--------|---------|------|
+| T-22 | Верификация компании (диалог токена) | ⬜ | T-16 | [T-22-verification-screen.md](./T-22-verification-screen.md) |
+| T-24 | Рефералка (ссылка + шеринг) | ⬜ | T-14 | [T-24-referral-screen.md](./T-24-referral-screen.md) |
+| T-26 | Карта вакансий (leaflet) | ⬜ | T-14 | [T-26-map-screen.md](./T-26-map-screen.md) |
