@@ -21,7 +21,7 @@
 |------|--------|--------|---------|------|
 | T-08 | `internal/scoring` + тесты | ⬜ | T-04 | [T-08-scoring.md](./T-08-scoring.md) |
 | T-09 | Выдача кандидатов `GET /vacancies/{id}/candidates` (list/feed) | ⬜ | T-07, T-08 | [T-09-candidates-api.md](./T-09-candidates-api.md) |
-| T-10 | Действия рекрутера `POST .../action` (миграция 000003) | ⬜ | T-09 | [T-10-recruiter-action.md](./T-10-recruiter-action.md) |
+| T-10 | Действия рекрутера `POST .../action` (миграция 000004) | ⬜ | T-09 | [T-10-recruiter-action.md](./T-10-recruiter-action.md) |
 | T-11 | Приглашения: `GET /my/invitations`, `POST /invitations/{id}/respond` | ⬜ | T-10 | [T-11-invitations.md](./T-11-invitations.md) |
 
 ## Этап 3 — уведомления и сиды
@@ -29,7 +29,7 @@
 | ID   | Задача | Статус | Зависит | Файл |
 |------|--------|--------|---------|------|
 | T-12 | Воркер еженедельного опроса + `POST /my/resume/confirm-activity` | ⬜ | T-06 | [T-12-survey-worker.md](./T-12-survey-worker.md) |
-| T-19 | Сидовые данные для демо | ⬜ | T-07 | [T-19-demo-seeds.md](./T-19-demo-seeds.md) |
+| T-19 | Сидовые данные для демо (scripts/seed_demo.py) | ✅ | T-07 | [T-19-demo-seeds.md](./T-19-demo-seeds.md) |
 
 ## Новые фичи (верификация, рефералка, карта)
 
@@ -38,4 +38,4 @@
 | T-21 | Верификация компании через бота (verified=true) | ⬜ | T-07 | [T-21-company-verification.md](./T-21-company-verification.md) |
 | T-23 | Рефералка: start_param, /my/referrals | ⬜ | T-03 | [T-23-referral-api.md](./T-23-referral-api.md) |
 | T-25 | Карта: координаты городов, GET /vacancies/map | ⬜ | T-07 | [T-25-map-api.md](./T-25-map-api.md) |
-| T-27 | AI-скоринг | ❄️ | T-08 | [T-27-ai-scoring.md](./T-27-ai-scoring.md) |
+| T-27 | AI-скоринг (обвязка z.ai/OpenAI-совместимый, фолбэк на алго) | ⬜ | T-08 | [T-27-ai-scoring.md](./T-27-ai-scoring.md) |
