@@ -136,10 +136,11 @@ func (h *MatchingHandler) Candidates(c echo.Context) error {
 			WorkFormat:       r.WorkFormat,
 		})
 		entries = append(entries, entry{item: dto.CandidateItem{
-			Score:     score,
-			Breakdown: breakdown,
-			User:      dto.FromUser(user),
-			Resume:    dto.FromResume(r),
+			Score:      score,
+			FinalScore: score,
+			Breakdown:  breakdown,
+			User:       dto.FromUser(user),
+			Resume:     dto.FromResume(r),
 		}})
 	}
 
