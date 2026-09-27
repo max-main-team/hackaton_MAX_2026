@@ -1,59 +1,38 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
-import { getInitData, getWebApp, isInsideMax } from './lib/max'
-import { api, type AuthUser } from './lib/api'
+import { api } from './lib/api'
 
 function App() {
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [health, setHealth] = useState<'checking' | 'ok' | 'down'>('checking')
 
   useEffect(() => {
-    getWebApp()?.ready()
-    getWebApp()?.expand()
-  }, [])
-
-  const login = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      setUser(await api.auth(getInitData()))
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setLoading(false)
-    }
+    api.health()
+      .then(() => setHealth('ok'))
+      .catch(() => setHealth('down'))
   }, [])
 
   return (
     <main className="app">
       <h1>MAX Mini App</h1>
+      <p className="subtitle">Реверс-найм внутри MAX · хакатон 2026</p>
 
-      {!isInsideMax() && (
-        <p className="hint">
-          Открыто вне MAX — initData недоступна, авторизация вернёт ошибку.
-        </p>
-      )}
+      {health === 'checking' && <p className="status-line">Проверяем сервис…</p>}
 
-      {user ? (
-        <section className="card">
-          <h2>
-            {user.first_name} {user.last_name}
-          </h2>
-          <dl>
-            <dt>ID</dt>
-            <dd>{user.id}</dd>
-            <dt>Username</dt>
-            <dd>{user.username || '—'}</dd>
-          </dl>
+      {health === 'ok' && (
+        <section className="status-card ok">
+          <span className="status-title">✅ Всё работает</span>
+          <span className="status-note">API и база данных доступны</span>
         </section>
-      ) : (
-        <button onClick={login} disabled={loading}>
-          {loading ? 'Входим…' : 'Войти через MAX'}
-        </button>
       )}
 
-      {error && <p className="error">{error}</p>}
+      {health === 'down' && (
+        <section className="status-card down">
+          <span className="status-title">❌ Сервис недоступен</span>
+          <span className="status-note">Уже чиним, загляни чуть позже</span>
+        </section>
+      )}
+
+      <footer className="footer">eclipse-sim.ru · CI/CD: GitHub Actions</footer>
     </main>
   )
 }
