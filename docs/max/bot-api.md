@@ -92,6 +92,23 @@ curl -X POST "https://platform-api2.max.ru/messages?user_id={user_id}" \
 
 Ответ на callback-кнопку: `POST /answers`.
 
+## Как понять, от какого бота токен: GET /me
+
+```bash
+curl -X GET "https://platform-api2.max.ru/me" \
+  -H "Authorization: <MAX_BOT_TOKEN>"
+```
+
+Ответ `200` — `User` + `BotInfo`: `user_id`, `first_name` (имя бота),
+`username` (никнейм), `is_bot: true`, `description`, `avatar_url`,
+`commands`. `401` — токен неверный или отозван.
+
+Практика:
+- токен валидации initData обязан принадлежать **тому же боту**, к которому
+  привязан мини-апп, — иначе подпись не сойдётся;
+- полезно на старте сервера (если `MAX_BOT_TOKEN` задан) дернуть `/me`
+  и залогировать имя/ID бота — сразу видно, тем ли ключом деплоились.
+
 ## Полезные методы (на будущее)
 
 | Метод | Зачем |
