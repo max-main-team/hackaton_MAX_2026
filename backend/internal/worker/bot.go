@@ -160,6 +160,8 @@ type keyboardButton struct {
 func (w *BotWorker) replyGreeting(ctx context.Context, chatID int64) {
 	if err := w.sendMessage(ctx, fmt.Sprintf("chat_id=%d", chatID), greetingMessage()); err != nil {
 		w.log.Error("bot reply failed", slog.Int64("chat_id", chatID), slog.Any("err", err))
+	} else {
+		w.log.Info("greeting sent to chat", slog.Int64("chat_id", chatID))
 	}
 }
 
