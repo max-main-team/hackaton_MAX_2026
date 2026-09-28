@@ -35,7 +35,7 @@ func Load() *Config {
 		MaxBotToken:     os.Getenv("MAX_BOT_TOKEN"),
 		AIAPIKey:        os.Getenv("AI_API_KEY"),
 		AIBaseURL:       getEnv("AI_BASE_URL", "https://api.z.ai/api/paas/v4"),
-		AIModel:         getEnv("AI_MODEL", "glm-4.5-flash"),
+		AIModel:         getEnv("AI_MODEL", "glm-4.5-air"),
 		ShutdownTimeout: 10 * time.Second,
 	}
 }
