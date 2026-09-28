@@ -110,7 +110,11 @@ func (w *BotWorker) poll(ctx context.Context) error {
 	}
 	w.log.Info("bot poll", slog.Int("updates", len(parsed.Updates)), slog.Int64("marker", w.marker))
 	for _, u := range parsed.Updates {
-		w.log.Info("bot update", slog.String("type", u.UpdateType))
+		w.log.Info("bot update",
+			slog.String("type", u.UpdateType),
+			slog.Int64("ts", u.Payload.Message.Timestamp),
+			slog.Int64("chat_id", u.Payload.Message.Recipient.ChatID),
+			slog.String("text", u.Payload.Message.Text))
 	}
 
 	for _, u := range parsed.Updates {
@@ -126,8 +130,13 @@ func (w *BotWorker) poll(ctx context.Context) error {
 			}
 		case "message_created":
 			// отвечаем только на свежие сообщения, чтобы не спамить при рестартах
-			if u.Payload.Message.Timestamp > 0 {
-				msgTime := time.UnixMilli(u.Payload.Message.Timestamp)
+			if ts := u.Payload.Message.Timestamp; ts > 0 {
+				var msgTime time.Time
+				if ts > 1_000_000_000_000 {
+					msgTime = time.UnixMilli(ts)
+				} else {
+					msgTime = time.Unix(ts, 0)
+				}
 				if time.Since(msgTime) > 2*time.Minute {
 					continue
 				}
