@@ -16,3 +16,5 @@ dist/
 .DS_Store
 .playwright-mcp/
 bot-start-error.png
+*.png
+!frontend/public/*.svg
