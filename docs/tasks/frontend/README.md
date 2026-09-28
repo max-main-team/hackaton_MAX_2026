@@ -46,3 +46,9 @@
 | T-22 | Верификация компании (диалог токена) | ✅ | T-16 | [T-22-verification-screen.md](./T-22-verification-screen.md) |
 | T-24 | Рефералка (ссылка + шеринг) | ✅ | T-14 | [T-24-referral-screen.md](./T-24-referral-screen.md) |
 | T-26 | Карта вакансий (leaflet) | ✅ | T-14 | [T-26-map-screen.md](./T-26-map-screen.md) |
+
+## Редизайн (Figma Direction A)
+
+| ID | Задача | Статус | Зависит | Файл |
+|----|--------|--------|---------|------|
+| T-31 | Весь фронт в стиле Direction A (Structured Slate) | ✅ | T-13…T-30 | [T-31-design-direction-a.md](./T-31-design-direction-a.md) |

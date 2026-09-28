@@ -1,31 +1,21 @@
 import { useNavigate } from 'react-router-dom'
-import { callBridge } from '../lib/max'
+import { Screen } from '../components/Screen'
 
 export default function ErrorScreen() {
   const navigate = useNavigate()
 
   return (
-    <main className="page">
+    <Screen title="Что-то сломалось">
       <div className="status-card down">
-        <span className="status-title">Что-то сломалось</span>
+        <span className="status-title">Ошибка</span>
         <span className="status-note">Мы уже в курсе. Попробуйте перезагрузить мини-приложение.</span>
       </div>
       <button className="btn" onClick={() => window.location.reload()}>
         Перезагрузить
       </button>
-      <button
-        className="btn btn-secondary"
-        onClick={() => {
-          callBridge((app) => {
-            if (typeof app.BackButton !== 'undefined') {
-              /* MAX не даёт закрыть апп программно — ведём на главную */
-            }
-          })
-          navigate('/')
-        }}
-      >
+      <button className="btn btn-ghost" onClick={() => navigate('/')}>
         На главный экран
       </button>
-    </main>
+    </Screen>
   )
 }

@@ -153,6 +153,9 @@ export interface InvitationVacancy {
   id: number
   title: string
   city: string
+  work_format: string
+  salary_min: number | null
+  salary_max: number | null
 }
 
 export interface Invitation {

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { companyVacancies, myCompanies, updateVacancy } from '../../api/company'
 import type { Company, Vacancy } from '../../api/types'
 import { WORK_FORMAT_LABELS } from '../../api/types'
+import { Screen } from '../../components/Screen'
+import { formatSalary } from '../../components/format'
 
 export default function VacanciesScreen() {
   const [company, setCompany] = useState<Company | null>(null)
@@ -32,51 +34,53 @@ export default function VacanciesScreen() {
 
   if (vacancies === null) {
     return (
-      <main className="page">
+      <Screen role="recruiter">
         <p className="muted">Загрузка…</p>
-      </main>
+      </Screen>
     )
   }
 
   return (
-    <main className="page">
-      <Link className="back" to="/company">
-        ← Компания
-      </Link>
-      <h1 className="page-title">Вакансии{company ? ` · ${company.name}` : ''}</h1>
-
+    <Screen role="recruiter" title="Вакансии" icon="list" sub={company ? company.name : undefined}>
       {error && <p className="error-text">{error}</p>}
 
-      <Link className="btn" to="/company/vacancies/new" style={{ textAlign: 'center' }}>
+      <Link className="btn" to="/company/vacancies/new">
         + Новая вакансия
       </Link>
 
-      {vacancies.length === 0 && <p className="muted">Пока нет вакансий</p>}
+      {vacancies.length === 0 && (
+        <div className="center-note">
+          <span>Пока нет вакансий</span>
+        </div>
+      )}
 
       {vacancies.map((v) => (
-        <div className="list-item" key={v.id}>
-          <div className="row" style={{ justifyContent: 'space-between' }}>
-            <strong>{v.title}</strong>
-            <span className="badge" style={v.is_active ? {} : { background: '#5c2a2a' }}>
+        <div className="card gap-sm" key={v.id}>
+          <div className="row between" style={{ flexWrap: 'nowrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+              <strong style={{ fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis' }}>{v.title}</strong>
+              <span className="muted" style={{ fontSize: 12 }}>
+                {WORK_FORMAT_LABELS[v.work_format] ?? v.work_format} · {v.city || '—'} · TTL {v.response_ttl_hours}ч
+              </span>
+            </div>
+            <span className={`chip${v.is_active ? '' : ' '}`} style={v.is_active ? { color: 'var(--green)', borderColor: 'var(--ok-border)' } : { color: 'var(--warn-text)', background: 'var(--warn-bg)', borderColor: 'var(--warn-border)' }}>
               {v.is_active ? 'Активна' : 'Архив'}
             </span>
           </div>
-          <span className="muted">
-            {WORK_FORMAT_LABELS[v.work_format] ?? v.work_format} · {v.city || '—'} · TTL {v.response_ttl_hours}ч
-          </span>
+          {formatSalary(v.salary_min, v.salary_max) && <span className="salary">{formatSalary(v.salary_min, v.salary_max)}</span>}
           <div className="row">
-            <Link className="btn" style={{ padding: '8px 14px' }} to={`/vacancy/${v.id}/feed`}>
+            <Link className="btn" style={{ flex: 1 }} to={`/vacancy/${v.id}/feed`}>
               Лента
             </Link>
-            <Link className="btn btn-secondary" style={{ padding: '8px 14px' }} to={`/vacancy/${v.id}/list`}>
+            <Link className="btn btn-ghost" style={{ flex: 1 }} to={`/vacancy/${v.id}/list`}>
               Список
             </Link>
-            <button className="btn btn-secondary" style={{ padding: '8px 14px' }} onClick={() => toggle(v)}>
+            <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => toggle(v)}>
               {v.is_active ? 'В архив' : 'Вернуть'}
             </button>
           </div>
         </div>
       ))}
-    </main>
+    </Screen>
   )
 }

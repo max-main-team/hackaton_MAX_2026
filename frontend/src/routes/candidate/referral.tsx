@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { myReferrals } from '../../api/auth'
 import type { ReferralsResponse } from '../../api/types'
+import { Screen } from '../../components/Screen'
+import { Icon } from '../../components/Icon'
 import { getWebApp } from '../../lib/max'
 import { getStoredUser } from '../../lib/session'
 
@@ -48,34 +50,34 @@ export default function ReferralScreen() {
   }
 
   return (
-    <main className="page">
-      <h1 className="page-title">Пригласить друзей</h1>
-      <p className="page-sub">За каждого друга, который придёт по вашей ссылке</p>
-
+    <Screen role="candidate" title="Пригласить друзей" icon="plus" sub="За каждого друга, который придёт по вашей ссылке">
       {error && <p className="error-text">{error}</p>}
       {data && (
         <div className="status-card ok">
           <span className="status-title">Приглашено: {data.count}</span>
           {data.items.length > 0 && (
-            <span className="status-note">
-              {data.items.map((i) => i.first_name).join(', ')}
-            </span>
+            <span className="status-note">{data.items.map((i) => i.first_name).join(', ')}</span>
           )}
         </div>
       )}
 
-      <div className="card">
-        <span className="muted">Ваша ссылка</span>
+      <div className="card gap-sm">
+        <div className="row" style={{ flexWrap: 'nowrap', gap: 6 }}>
+          <Icon name="plus" size={14} />
+          <span className="muted" style={{ fontSize: 12 }}>
+            Ваша ссылка
+          </span>
+        </div>
         <span style={{ wordBreak: 'break-all', fontSize: 13 }}>{link}</span>
         <div className="row">
-          <button className="btn" onClick={copy}>
+          <button className="btn" style={{ flex: 1 }} onClick={copy}>
             {copied ? 'Скопировано ✓' : 'Скопировать'}
           </button>
-          <button className="btn btn-secondary" onClick={share}>
+          <button className="btn btn-ghost" style={{ flex: 1 }} onClick={share}>
             Поделиться
           </button>
         </div>
       </div>
-    </main>
+    </Screen>
   )
 }

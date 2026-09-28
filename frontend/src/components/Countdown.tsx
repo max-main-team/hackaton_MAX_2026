@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react'
+import { Icon } from './Icon'
 
 interface Props {
   deadlineAt: string
+  hoursLeft?: number
 }
 
-export function Countdown({ deadlineAt }: Props) {
+function format(hoursDiff: number): { text: string; warn: boolean } {
+  const whole = Math.floor(hoursDiff)
+  const minutes = Math.floor((hoursDiff - whole) * 60)
+  const text = `Осталось ${whole} ч${minutes > 0 ? ` ${minutes} мин` : ''}`
+  return { text, warn: hoursDiff < 2 }
+}
+
+export function Countdown({ deadlineAt, hoursLeft }: Props) {
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -12,16 +21,16 @@ export function Countdown({ deadlineAt }: Props) {
     return () => clearInterval(timer)
   }, [])
 
-  const diffHours = (new Date(deadlineAt).getTime() - now) / 3600000
+  const diffHours = hoursLeft ?? (new Date(deadlineAt).getTime() - now) / 3600000
 
   if (diffHours <= 0) {
-    return <span className="error-text">Просрочено</span>
+    return <span className="timer overdue">Просрочено</span>
   }
-  const whole = Math.floor(diffHours)
-  const minutes = Math.floor((diffHours - whole) * 60)
+  const { text, warn } = format(diffHours)
   return (
-    <span className="ok-text">
-      Осталось {whole} ч {minutes > 0 ? `${minutes} мин` : ''}
+    <span className={`timer${warn ? ' warn' : ''}`}>
+      {warn ? <Icon name="alertCircle" size={12} /> : <Icon name="clock" size={12} />}
+      {text}
     </span>
   )
 }

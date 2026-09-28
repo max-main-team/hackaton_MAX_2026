@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { confirmActivity, getResume, parseResume, saveResume } from '../../api/resume'
 import type { Resume, ResumeInput, ResumeLink } from '../../api/types'
 import { EMPLOYMENT_TYPES, WORK_FORMATS, WORK_FORMAT_LABELS } from '../../api/types'
+import { Screen } from '../../components/Screen'
+import { Icon } from '../../components/Icon'
 
 const EMPTY_FORM: ResumeInput = {
   title: '',
@@ -145,22 +147,24 @@ export default function ResumeScreen() {
 
   if (loading) {
     return (
-      <main className="page">
+      <Screen role="candidate">
         <p className="muted">Загрузка…</p>
-      </main>
+      </Screen>
     )
   }
 
   return (
-    <main className="page">
-      <h1 className="page-title">Моё резюме</h1>
-      {notFound && <p className="muted">Заполните резюме или загрузите PDF — оно появится в подборках компаний</p>}
+    <Screen role="candidate" title="Моё резюме" icon="user" sub={notFound ? 'Заполните резюме или загрузите PDF — оно появится в подборках компаний' : undefined}>
+      {error && <p className="error-text">{error}</p>}
 
-      <div className="card">
-        <strong>Быстрый старт: загрузите PDF-резюме</strong>
-        <span className="muted">
-          Мы извлечём текст и AI заполнит поля. Проверьте и поправьте перед сохранением.
+      <div className="ai-block">
+        <span className="ai-label">
+          <Icon name="zap" size={14} />
+          Быстрый старт
         </span>
+        <p style={{ fontSize: 13 }}>
+          Загрузите PDF-резюме — AI заполнит поля. Проверьте и поправьте перед сохранением.
+        </p>
         <input
           ref={fileRef}
           type="file"
@@ -170,51 +174,71 @@ export default function ResumeScreen() {
             if (file) void uploadPdf(file)
           }}
           disabled={stage !== 'idle'}
-          style={{ fontSize: 13 }}
+          style={{ fontSize: 12, color: 'var(--muted)' }}
         />
-        {stage === 'extracting' && <p className="muted">Извлекаем текст из PDF…</p>}
-        {stage === 'parsing' && <p className="muted">AI распознаёт резюме… Это займёт до минуты</p>}
+        {stage === 'extracting' && <p className="muted" style={{ margin: 0 }}>Извлекаем текст из PDF…</p>}
+        {stage === 'parsing' && <p className="muted" style={{ margin: 0 }}>AI распознаёт резюме… Это займёт до минуты</p>}
       </div>
 
-      <div className="card">
-        <div className="field">
-          <label>Желаемая должность *</label>
-          <input className="input" value={form.title} onChange={(e) => setField('title', e.target.value)} />
+      <div className="form-section">
+        <p className="section-label">Основное</p>
+        <div className="fieldset">
+          <div className="field">
+            <label>Желаемая должность *</label>
+            <input className="input" value={form.title} onChange={(e) => setField('title', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Навыки (через запятую)</label>
+            <input className="input" value={form.skills} onChange={(e) => setField('skills', e.target.value)} />
+          </div>
         </div>
-        <div className="field">
-          <label>Навыки (через запятую)</label>
-          <input className="input" value={form.skills} onChange={(e) => setField('skills', e.target.value)} />
-        </div>
-        <div className="row">
-          <div className="field" style={{ flex: 1 }}>
-            <label>Опыт, мес</label>
+      </div>
+
+      <div className="form-section">
+        <p className="section-label">Условия</p>
+        <div className="fieldset">
+          <div className="fieldset-row">
+            <span className="flabel">Опыт, мес</span>
             <input
-              className="input"
+              className="input plain"
               type="number"
+              style={{ maxWidth: 90 }}
               value={form.experience_months}
               onChange={(e) => setField('experience_months', Number(e.target.value))}
             />
           </div>
-          <div className="field" style={{ flex: 1 }}>
-            <label>Город</label>
-            <input className="input" value={form.city} onChange={(e) => setField('city', e.target.value)} />
+          <hr className="divider" />
+          <div className="fieldset-row">
+            <span className="flabel">Город</span>
+            <input
+              className="input plain"
+              style={{ maxWidth: 180 }}
+              value={form.city}
+              onChange={(e) => setField('city', e.target.value)}
+            />
           </div>
-        </div>
-        <div className="row">
-          <div className="field" style={{ flex: 1 }}>
-            <label>Формат работы</label>
-            <select className="select" value={form.work_format} onChange={(e) => setField('work_format', e.target.value)}>
+          <hr className="divider" />
+          <div className="fieldset-row">
+            <span className="flabel">Формат</span>
+            <div className="seg">
               {WORK_FORMATS.map((f) => (
-                <option key={f} value={f}>
+                <button
+                  key={f}
+                  type="button"
+                  className={`seg-item${form.work_format === f ? ' active' : ''}`}
+                  onClick={() => setField('work_format', f)}
+                >
                   {WORK_FORMAT_LABELS[f] ?? f}
-                </option>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
-          <div className="field" style={{ flex: 1 }}>
-            <label>Занятость</label>
+          <hr className="divider" />
+          <div className="fieldset-row">
+            <span className="flabel">Занятость</span>
             <select
-              className="select"
+              className="input plain"
+              style={{ maxWidth: 150, appearance: 'none', cursor: 'pointer' }}
               value={form.employment_type}
               onChange={(e) => setField('employment_type', e.target.value)}
             >
@@ -225,61 +249,73 @@ export default function ResumeScreen() {
               ))}
             </select>
           </div>
-        </div>
-        <div className="row">
-          <div className="field" style={{ flex: 1 }}>
-            <label>Зарплата от</label>
-            <input
-              className="input"
-              type="number"
-              value={form.salary_min ?? ''}
-              onChange={(e) => setField('salary_min', e.target.value === '' ? null : Number(e.target.value))}
-            />
+          <hr className="divider" />
+          <div className="fieldset-row">
+            <span className="flabel">Оклад</span>
+            <div className="row" style={{ flexWrap: 'nowrap', gap: 4 }}>
+              <input
+                className="input plain"
+                type="number"
+                style={{ maxWidth: 90 }}
+                placeholder="от"
+                value={form.salary_min ?? ''}
+                onChange={(e) => setField('salary_min', e.target.value === '' ? null : Number(e.target.value))}
+              />
+              <span className="muted">–</span>
+              <input
+                className="input plain"
+                type="number"
+                style={{ maxWidth: 90 }}
+                placeholder="до"
+                value={form.salary_max ?? ''}
+                onChange={(e) => setField('salary_max', e.target.value === '' ? null : Number(e.target.value))}
+              />
+              <span className="fvalue">₽</span>
+            </div>
           </div>
-          <div className="field" style={{ flex: 1 }}>
-            <label>до</label>
-            <input
-              className="input"
-              type="number"
-              value={form.salary_max ?? ''}
-              onChange={(e) => setField('salary_max', e.target.value === '' ? null : Number(e.target.value))}
-            />
-          </div>
         </div>
-        <div className="field">
-          <label>О себе</label>
-          <textarea className="textarea" value={form.about} onChange={(e) => setField('about', e.target.value)} />
-        </div>
-        <div className="field">
-          <label>Образование</label>
-          <input className="input" value={form.education} onChange={(e) => setField('education', e.target.value)} />
-        </div>
+      </div>
 
-        <div className="field">
-          <label>Ссылки</label>
+      <div className="form-section">
+        <p className="section-label">О себе</p>
+        <div className="fieldset">
+          <textarea
+            className="textarea"
+            style={{ background: 'transparent', border: 'none', padding: 0, minHeight: 64 }}
+            placeholder="Расскажите о своём опыте…"
+            value={form.about}
+            onChange={(e) => setField('about', e.target.value)}
+          />
+          <hr className="divider" />
+          <div className="field">
+            <label>Образование</label>
+            <input className="input" value={form.education} onChange={(e) => setField('education', e.target.value)} />
+          </div>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <p className="section-label">Ссылки</p>
+        <div className="fieldset">
           {links.map((link, i) => (
-            <div className="row" key={i}>
+            <div className="row" key={i} style={{ flexWrap: 'nowrap' }}>
               <input
                 className="input"
                 style={{ maxWidth: 110 }}
                 value={link.type}
                 placeholder="github"
-                onChange={(e) =>
-                  setLinks(links.map((x, xi) => (xi === i ? { ...x, type: e.target.value } : x)))
-                }
+                onChange={(e) => setLinks(links.map((x, xi) => (xi === i ? { ...x, type: e.target.value } : x)))}
               />
               <input
                 className="input"
                 style={{ flex: 1 }}
                 value={link.url}
                 placeholder="https://..."
-                onChange={(e) =>
-                  setLinks(links.map((x, xi) => (xi === i ? { ...x, url: e.target.value } : x)))
-                }
+                onChange={(e) => setLinks(links.map((x, xi) => (xi === i ? { ...x, url: e.target.value } : x)))}
               />
               <button
-                className="btn btn-secondary"
-                style={{ padding: '8px 10px' }}
+                className="btn btn-ghost"
+                style={{ width: 38, padding: 0, flex: 'none' }}
                 onClick={() => setLinks(links.filter((_, xi) => xi !== i))}
               >
                 ✕
@@ -290,27 +326,31 @@ export default function ResumeScreen() {
             + добавить ссылку
           </button>
         </div>
-
-        {saved && <p className="ok-text">Сохранено</p>}
-        {error && <p className="error-text">{error}</p>}
-        <button className="btn" onClick={save}>
-          Сохранить резюме
-        </button>
       </div>
 
-      <div className="card">
-        <strong>Подбор актуален?</strong>
-        <span className="muted">Подтверждайте раз в неделю, чтобы компании вас видели</span>
-        {confirmed && <span className="ok-text">Спасибо, подтвердили</span>}
-        <div className="row">
-          <button className="btn btn-success" onClick={() => confirm(true)}>
-            Актуально
-          </button>
-          <button className="btn btn-secondary" onClick={() => confirm(false)}>
-            Не ищу работу
-          </button>
+      {saved && <p className="ok-text" style={{ margin: 0 }}>Сохранено</p>}
+
+      <button className="btn btn-xl" onClick={save}>
+        Сохранить резюме
+      </button>
+
+      <div className="form-section" style={{ paddingBottom: 8 }}>
+        <p className="section-label">Подбор актуален?</p>
+        <div className="card gap-sm">
+          <span className="muted" style={{ fontSize: 12 }}>
+            Подтверждайте раз в неделю, чтобы компании вас видели
+          </span>
+          {confirmed && <span className="ok-text">Спасибо, подтвердили</span>}
+          <div className="row">
+            <button className="btn" style={{ flex: 1 }} onClick={() => confirm(true)}>
+              Актуально
+            </button>
+            <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => confirm(false)}>
+              Не ищу работу
+            </button>
+          </div>
         </div>
       </div>
-    </main>
+    </Screen>
   )
 }

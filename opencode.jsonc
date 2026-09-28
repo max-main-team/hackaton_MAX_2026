@@ -8,10 +8,17 @@
         "enabled": true
       }
     }
+    // Figma MCP вынесен в глобальный конфиг ~/.config/opencode/opencode.jsonc
+    // (токен не должен лежать в git-репозитории)
   },
   // Автономная работа: минимум запросов подтверждения.
   // Последнее совпадающее правило выигрывает.
   "permissions": [
+    // автономный режим: всё разрешено, важное перекрыто deny-правилами ниже
+    { "action": "*", "resource": "*", "effect": "allow" },
+    // MCP-серверы: figma и playwright — явно
+    { "action": "figma_*", "resource": "*", "effect": "allow" },
+    { "action": "playwright_*", "resource": "*", "effect": "allow" },
     { "action": "shell", "resource": "*", "effect": "allow" },
     { "action": "edit", "resource": "*", "effect": "allow" },
     { "action": "read", "resource": "*.env", "effect": "allow" },

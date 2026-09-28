@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { mapVacancies } from '../api/map'
 import type { MapVacancy } from '../api/types'
+import { Screen } from '../components/Screen'
+import { getStoredUser } from '../lib/session'
 
 declare global {
   interface Window {
@@ -12,7 +14,7 @@ let ymapsScriptLoaded = false
 
 function ensureYmaps(): Promise<void> {
   if (ymapsScriptLoaded && window.ymaps) return Promise.resolve()
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const check = () => {
       if (window.ymaps?.ready) {
         window.ymaps.ready(() => resolve())
@@ -35,6 +37,7 @@ export default function MapScreen() {
   const mapRef = useRef<HTMLDivElement>(null)
   const [items, setItems] = useState<MapVacancy[] | null>(null)
   const [error, setError] = useState('')
+  const role = getStoredUser<{ role: string } | null>()?.role
 
   useEffect(() => {
     mapVacancies()
@@ -49,7 +52,7 @@ export default function MapScreen() {
     const map = new window.ymaps.Map(mapRef.current, {
       center: [59.9386, 30.3141],
       zoom: 11,
-      controls: ['zoomControl', 'fullscreenControl']
+      controls: ['zoomControl', 'fullscreenControl'],
     })
 
     items.forEach((v) => {
@@ -57,10 +60,10 @@ export default function MapScreen() {
       const placemark = new window.ymaps.Placemark([v.lat, v.lng], {
         balloonContentHeader: v.title,
         balloonContentBody: `${v.company_name}${v.verified ? ' ✓' : ''}<br/>${v.city || ''}`,
-        balloonContentFooter: v.salary_min ? `от ${v.salary_min}₽` : ''
+        balloonContentFooter: v.salary_min ? `от ${v.salary_min}₽` : '',
       }, {
         preset: 'islands#blueDotIcon',
-        iconColor: '#5288c1'
+        iconColor: '#5288c1',
       })
       map.geoObjects.add(placemark)
     })
@@ -68,9 +71,11 @@ export default function MapScreen() {
     if (items.length === 1) {
       map.setCenter([items[0].lat, items[0].lng], 13)
     } else if (items.length > 1) {
-      const lats = items.map(v => v.lat)
-      const lngs = items.map(v => v.lng)
-      map.setBounds([[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]], { checkZoomRange: true })
+      const lats = items.map((v) => v.lat)
+      const lngs = items.map((v) => v.lng)
+      map.setBounds([[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]], {
+        checkZoomRange: true,
+      })
     }
   }, [items])
 
@@ -79,19 +84,25 @@ export default function MapScreen() {
   }, [])
 
   return (
-    <main className="page">
-      <h1 className="page-title">Карта вакансий</h1>
-      <p className="page-sub">Активные вакансии с координатами · Яндекс.Карты</p>
+    <Screen role={role === 'recruiter' ? 'recruiter' : 'candidate'} title="Карта вакансий" icon="map">
       {error && <p className="error-text">{error}</p>}
       {items === null && <p className="muted">Загрузка…</p>}
+      {items !== null && items.length === 0 && (
+        <div className="center-note">
+          <span>Пока нет вакансий на карте</span>
+        </div>
+      )}
 
-      <div ref={mapRef} style={{ height: '70vh', borderRadius: 12, overflow: 'hidden' }} />
+      <div
+        ref={mapRef}
+        style={{ height: '62vh', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--stroke)' }}
+      />
 
       {items !== null && items.length > 0 && (
-        <p className="muted" style={{ textAlign: 'center' }}>
+        <p className="muted" style={{ textAlign: 'center', fontSize: 12, margin: 0 }}>
           {items.length} вакансий · Яндекс.Карты
         </p>
       )}
-    </main>
+    </Screen>
   )
 }

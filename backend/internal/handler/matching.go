@@ -350,8 +350,11 @@ func (h *MatchingHandler) Invitations(c echo.Context) error {
 			DeadlineAt: deadline,
 			HoursLeft:  hoursLeft,
 			Company:    dto.InvitationCompany{ID: d.CompanyID, Name: d.CompanyName, Verified: d.CompanyVerified},
-			Vacancy:    dto.InvitationVacancy{ID: d.VacancyID, Title: d.VacancyTitle, City: d.VacancyCity},
-			Response:   d.Response,
+			Vacancy: dto.InvitationVacancy{
+				ID: d.VacancyID, Title: d.VacancyTitle, City: d.VacancyCity,
+				WorkFormat: d.VacancyWorkFormat, SalaryMin: d.VacancySalaryMin, SalaryMax: d.VacancySalaryMax,
+			},
+			Response: d.Response,
 		})
 	}
 

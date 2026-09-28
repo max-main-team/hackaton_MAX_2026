@@ -61,37 +61,47 @@ export default function Login() {
         navigate(homeRedirect(res.user.role), { replace: true })
       })
       .catch((e) => {
-        setStatus('error')
         setError(e instanceof Error ? e.message : 'Ошибка входа')
+        setStatus('error')
       })
   }
 
   return (
-    <main className="page">
-      <h1 className="page-title">MAX Mini App</h1>
-      <p className="page-sub">Реверс-найм внутри MAX · хакатон 2026</p>
+    <main className="screen">
+      <div style={{ marginTop: 'auto' }} />
+      <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>MAX Mini App</h1>
+        <p className="muted" style={{ margin: 0 }}>
+          Реверс-найм внутри MAX · хакатон 2026
+        </p>
+      </div>
 
-      {status === 'checking' && <p className="muted">Входим…</p>}
+      <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {status === 'checking' && <p className="muted">Входим…</p>}
 
-      {status === 'error' && (
-        <>
-          <div className="status-card down">
-            <span className="status-title">Не удалось войти</span>
-            <span className="status-note">{error}</span>
-          </div>
-          <button className="btn" onClick={demoLogin}>
-            Демо-вход
+        {status === 'error' && (
+          <>
+            <div className="status-card down">
+              <span className="status-title">Не удалось войти</span>
+              <span className="status-note">{error}</span>
+            </div>
+            <button className="btn btn-xl" onClick={demoLogin}>
+              Демо-вход
+            </button>
+          </>
+        )}
+
+        {status === 'idle' && (
+          <button className="btn btn-xl" onClick={demoLogin}>
+            Войти
           </button>
-        </>
-      )}
+        )}
+      </div>
 
-      {status === 'idle' && (
-        <button className="btn" onClick={demoLogin}>
-          Войти
-        </button>
-      )}
-
-      <footer className="muted" style={{ marginTop: 'auto', textAlign: 'center' }}>
+      <footer
+        className="muted"
+        style={{ marginTop: 'auto', textAlign: 'center', padding: '0 20px 24px', fontSize: 12 }}
+      >
         eclipse-sim.ru · CI/CD: GitHub Actions
       </footer>
     </main>

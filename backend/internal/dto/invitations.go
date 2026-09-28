@@ -15,9 +15,12 @@ type InvitationCompany struct {
 }
 
 type InvitationVacancy struct {
-	ID    int64  `json:"id"`
-	Title string `json:"title"`
-	City  string `json:"city"`
+	ID         int64  `json:"id"`
+	Title      string `json:"title"`
+	City       string `json:"city"`
+	WorkFormat string `json:"work_format"`
+	SalaryMin  *int32 `json:"salary_min"`
+	SalaryMax  *int32 `json:"salary_max"`
 }
 
 type Invitation struct {

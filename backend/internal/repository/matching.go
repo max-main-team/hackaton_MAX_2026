@@ -22,20 +22,23 @@ type RecruiterAction struct {
 }
 
 type InvitationDetail struct {
-	ActionID        int64     `json:"action_id"`
-	RecruiterUserID int64     `json:"recruiter_user_id"`
-	CandidateUserID int64     `json:"candidate_user_id"`
-	RecruiterName   string    `json:"recruiter_name"`
-	RecruiterLogin  string    `json:"recruiter_login"`
-	CompanyID       int64     `json:"company_id"`
-	CompanyName     string    `json:"company_name"`
-	CompanyVerified bool      `json:"company_verified"`
-	VacancyID       int64     `json:"vacancy_id"`
-	VacancyTitle    string    `json:"vacancy_title"`
-	VacancyCity     string    `json:"vacancy_city"`
-	TTLHours        int       `json:"ttl_hours"`
-	CreatedAt       time.Time `json:"created_at"`
-	Response        *string   `json:"response"`
+	ActionID          int64     `json:"action_id"`
+	RecruiterUserID   int64     `json:"recruiter_user_id"`
+	CandidateUserID   int64     `json:"candidate_user_id"`
+	RecruiterName     string    `json:"recruiter_name"`
+	RecruiterLogin    string    `json:"recruiter_login"`
+	CompanyID         int64     `json:"company_id"`
+	CompanyName       string    `json:"company_name"`
+	CompanyVerified   bool      `json:"company_verified"`
+	VacancyID         int64     `json:"vacancy_id"`
+	VacancyTitle      string    `json:"vacancy_title"`
+	VacancyCity       string    `json:"vacancy_city"`
+	VacancyWorkFormat string    `json:"vacancy_work_format"`
+	VacancySalaryMin  *int32    `json:"vacancy_salary_min"`
+	VacancySalaryMax  *int32    `json:"vacancy_salary_max"`
+	TTLHours          int       `json:"ttl_hours"`
+	CreatedAt         time.Time `json:"created_at"`
+	Response          *string   `json:"response"`
 }
 
 type MatchingRepo struct {
@@ -90,7 +93,7 @@ func (r *MatchingRepo) GetInvitationDetail(ctx context.Context, actionID int64) 
 	err := r.pool.QueryRow(ctx, `
 		SELECT ra.id, ra.recruiter_user_id, ra.candidate_user_id, COALESCE(u.username, ''),
 		       c.id, c.name, c.verified,
-		       v.id, v.title, v.city, v.response_ttl_hours, ra.created_at,
+		       v.id, v.title, v.city, v.work_format, v.salary_min, v.salary_max, v.response_ttl_hours, ra.created_at,
 		       cr.response
 		FROM recruiter_actions ra
 		JOIN vacancies v ON v.id = ra.vacancy_id
@@ -101,7 +104,7 @@ func (r *MatchingRepo) GetInvitationDetail(ctx context.Context, actionID int64) 
 	`, actionID).Scan(
 		&d.ActionID, &d.RecruiterUserID, &d.CandidateUserID, &d.RecruiterLogin,
 		&d.CompanyID, &d.CompanyName, &d.CompanyVerified,
-		&d.VacancyID, &d.VacancyTitle, &d.VacancyCity, &d.TTLHours, &d.CreatedAt,
+		&d.VacancyID, &d.VacancyTitle, &d.VacancyCity, &d.VacancyWorkFormat, &d.VacancySalaryMin, &d.VacancySalaryMax, &d.TTLHours, &d.CreatedAt,
 		&d.Response,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -118,7 +121,7 @@ func (r *MatchingRepo) ListInvitationsByCandidate(ctx context.Context, candidate
 	rows, err := r.pool.Query(ctx, `
 		SELECT ra.id, ra.recruiter_user_id, ra.candidate_user_id, COALESCE(u.username, ''),
 		       c.id, c.name, c.verified,
-		       v.id, v.title, v.city, v.response_ttl_hours, ra.created_at,
+		       v.id, v.title, v.city, v.work_format, v.salary_min, v.salary_max, v.response_ttl_hours, ra.created_at,
 		       cr.response
 		FROM recruiter_actions ra
 		JOIN vacancies v ON v.id = ra.vacancy_id
@@ -139,7 +142,7 @@ func (r *MatchingRepo) ListInvitationsByCandidate(ctx context.Context, candidate
 		if err := rows.Scan(
 			&d.ActionID, &d.RecruiterUserID, &d.CandidateUserID, &d.RecruiterLogin,
 			&d.CompanyID, &d.CompanyName, &d.CompanyVerified,
-			&d.VacancyID, &d.VacancyTitle, &d.VacancyCity, &d.TTLHours, &d.CreatedAt,
+			&d.VacancyID, &d.VacancyTitle, &d.VacancyCity, &d.VacancyWorkFormat, &d.VacancySalaryMin, &d.VacancySalaryMax, &d.TTLHours, &d.CreatedAt,
 			&d.Response,
 		); err != nil {
 			return nil, fmt.Errorf("scan invitation: %w", err)

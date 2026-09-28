@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { setRole } from '../api/auth'
 import { setStoredUser } from '../lib/session'
+import { Icon } from '../components/Icon'
 import type { MeResponse } from '../api/types'
 
 export default function Onboarding() {
@@ -29,38 +30,63 @@ export default function Onboarding() {
   }
 
   return (
-    <main className="page">
-      <h1 className="page-title">Кто вы?</h1>
-      <p className="page-sub">Это определит ваш сценарий работы</p>
+    <main className="screen">
+      <header className="screen-header">
+        <h1>Кто вы?</h1>
+      </header>
+      <p className="screen-sub">Это определит ваш сценарий работы</p>
 
-      <button
-        className="card"
-        style={{ cursor: 'pointer', textAlign: 'left', border: 'none' }}
-        onClick={() => choose('candidate')}
-        disabled={busy !== null}
-      >
-        <strong>Я кандидат</strong>
-        <span className="muted">Ищу работу — компании сами найдут меня</span>
-      </button>
+      <div className="screen-body" style={{ paddingTop: 16, gap: 14 }}>
+        <button
+          className="card"
+          style={{ cursor: 'pointer', textAlign: 'left', alignItems: 'flex-start' }}
+          onClick={() => choose('candidate')}
+          disabled={busy !== null}
+        >
+          <div className="row" style={{ flexWrap: 'nowrap', gap: 12 }}>
+            <span className="avatar-sq" style={{ width: 40, height: 40 }}>
+              <Icon name="user" size={20} />
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <strong style={{ fontSize: 15 }}>Я кандидат</strong>
+              <span className="muted" style={{ fontSize: 12 }}>
+                Ищу работу — компании сами найдут меня
+              </span>
+            </div>
+          </div>
+        </button>
 
-      <button
-        className="card"
-        style={{ cursor: 'pointer', textAlign: 'left', border: 'none' }}
-        onClick={() => choose('recruiter')}
-        disabled={busy !== null}
-      >
-        <strong>Я рекрутер</strong>
-        <span className="muted">Ищу кандидатов — система подберёт приоритеты</span>
-      </button>
+        <button
+          className="card"
+          style={{ cursor: 'pointer', textAlign: 'left', alignItems: 'flex-start' }}
+          onClick={() => choose('recruiter')}
+          disabled={busy !== null}
+        >
+          <div className="row" style={{ flexWrap: 'nowrap', gap: 12 }}>
+            <span className="avatar-sq" style={{ width: 40, height: 40 }}>
+              <Icon name="briefcase" size={20} />
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <strong style={{ fontSize: 15 }}>Я рекрутер</strong>
+              <span className="muted" style={{ fontSize: 12 }}>
+                Ищу кандидатов — система подберёт приоритеты
+              </span>
+            </div>
+          </div>
+        </button>
 
-      <label className="row" style={{ gap: 8, fontSize: 13 }}>
-        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-        <span className="muted">
-          Согласен на обработку персональных данных (резюме, профиль MAX)
-        </span>
-      </label>
+        <label className="row" style={{ gap: 8, fontSize: 13 }}>
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            style={{ accentColor: 'var(--accent)' }}
+          />
+          <span className="muted">Согласен на обработку персональных данных (резюме, профиль MAX)</span>
+        </label>
 
-      {error && <p className="error-text">{error}</p>}
+        {error && <p className="error-text">{error}</p>}
+      </div>
     </main>
   )
 }
