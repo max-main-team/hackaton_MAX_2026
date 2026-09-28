@@ -108,6 +108,10 @@ func (w *BotWorker) poll(ctx context.Context) error {
 	if m, err := parsed.Marker.Int64(); err == nil && m > 0 {
 		w.marker = m
 	}
+	w.log.Info("bot poll", slog.Int("updates", len(parsed.Updates)), slog.Int64("marker", w.marker))
+	for _, u := range parsed.Updates {
+		w.log.Info("bot update", slog.String("type", u.UpdateType))
+	}
 
 	for _, u := range parsed.Updates {
 		switch u.UpdateType {
