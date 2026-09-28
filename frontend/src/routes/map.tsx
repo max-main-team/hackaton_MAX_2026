@@ -9,24 +9,18 @@ declare global {
 }
 
 let ymapsLoaded = false
-let ymapsCallbacks: (() => void)[] = []
+let ymapsPending: ((v: void) => void)[] = []
 
 function loadYmaps(): Promise<void> {
   if (ymapsLoaded) return Promise.resolve()
-  if (ymapsCallbacks.length) {
-    return new Promise(resolve => ymapsCallbacks.push(resolve))
-  }
+  if (ymapsPending.length) return new Promise(v => ymapsPending.push(v))
 
-  return new Promise(resolve => {
-    ymapsCallbacks.push(() => { ymapsLoaded = true; resolve() })
-    const script = document.createElement('script')
-    script.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU'
-    script.onload = () => {
-      ymapsCallbacks.forEach(f => f())
-      ymapsCallbacks = []
-    }
-    document.head.appendChild(script)
-  })
+  ymapsPending.push(() => { ymapsLoaded = true; ymapsPending.forEach(f => f()) })
+  const script = document.createElement('script')
+  script.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU'
+  script.onload = () => { ymapsPending.forEach(f => f()); ymapsPending = [] }
+  document.head.appendChild(script)
+  return new Promise(v => ymapsPending.push(v))
 }
 
 export default function MapScreen() {
@@ -42,9 +36,8 @@ export default function MapScreen() {
 
   useEffect(() => {
     if (!items || !items.length || !mapRef.current) return
-
     loadYmaps().then(() => {
-      if (!window.ymaps || !mapRef.current) return
+      if (!window.ymaps) return
 
       const map = new window.ymaps.Map(mapRef.current, {
         center: [59.9386, 30.3141],
@@ -81,8 +74,6 @@ export default function MapScreen() {
       <p className="page-sub">Активные вакансии с координатами · Яндекс.Карты</p>
       {error && <p className="error-text">{error}</p>}
       {items === null && <p className="muted">Загрузка…</p>}
-
-      {items !== null && items.length === 0 && <p className="muted">Пока нет вакансий на карте</p>}
 
       <div ref={mapRef} style={{ height: '70vh', borderRadius: 12, overflow: 'hidden' }} />
 
