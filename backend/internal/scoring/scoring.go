@@ -35,7 +35,7 @@ const (
 
 func tokenize(s string) map[string]struct{} {
 	out := make(map[string]struct{})
-	for _, part := range strings.Split(s, ",") {
+	for part := range strings.SplitSeq(s, ",") {
 		t := strings.ToLower(strings.TrimSpace(part))
 		if t != "" {
 			out[t] = struct{}{}
@@ -76,8 +76,7 @@ func Score(v Vacancy, r Resume) (int, Breakdown) {
 
 	experience := 1.0
 	if v.MinExperienceMonths > 0 {
-		experience = float64(r.ExperienceMonths) / float64(v.MinExperienceMonths)
-		experience = math.Max(0, math.Min(1, experience))
+		experience = min(1, max(0, float64(r.ExperienceMonths)/float64(v.MinExperienceMonths)))
 	}
 
 	breakdown := Breakdown{

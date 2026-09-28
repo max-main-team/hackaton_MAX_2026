@@ -11,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -78,14 +78,14 @@ func Verify(rawInitData, botToken string) error {
 		return errors.New("not enough params")
 	}
 
-	keys := make([]string, 0, len(values))
+	var keys []string
 	for k := range values {
 		if k == "hash" {
 			continue
 		}
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 
 	pairs := make([]string, 0, len(keys))
 	for _, k := range keys {

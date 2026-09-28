@@ -3,6 +3,7 @@ package dto
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"max-miniapp/backend/internal/repository"
@@ -81,36 +82,29 @@ func ValidateResumeInput(in ResumeInput) error {
 }
 
 func contains(list []string, v string) bool {
-	for _, item := range list {
-		if item == v {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(list, v)
 }
 
 func FromResume(r repository.Resume) Resume {
 	return Resume{
-		ResumeInput: ResumeInput{
-			Title:            r.Title,
-			Skills:           r.Skills,
-			ExperienceMonths: r.ExperienceMonths,
-			About:            r.About,
-			Education:        r.Education,
-			Links:            json.RawMessage(r.Links),
-			City:             r.City,
-			WorkFormat:       r.WorkFormat,
-			EmploymentType:   r.EmploymentType,
-			SalaryMin:        r.SalaryMin,
-			SalaryMax:        r.SalaryMax,
-		},
-		ID:              r.ID,
-		UserID:          r.UserID,
-		Source:          r.Source,
-		SourceText:      r.SourceText,
-		IsActive:        r.IsActive,
-		LastConfirmedAt: r.LastConfirmedAt,
-		CreatedAt:       r.CreatedAt,
-		UpdatedAt:       r.UpdatedAt,
+		Title:            r.Title,
+		Skills:           r.Skills,
+		ExperienceMonths: r.ExperienceMonths,
+		About:            r.About,
+		Education:        r.Education,
+		Links:            json.RawMessage(r.Links),
+		City:             r.City,
+		WorkFormat:       r.WorkFormat,
+		EmploymentType:   r.EmploymentType,
+		SalaryMin:        r.SalaryMin,
+		SalaryMax:        r.SalaryMax,
+		ID:               r.ID,
+		UserID:           r.UserID,
+		Source:           r.Source,
+		SourceText:       r.SourceText,
+		IsActive:         r.IsActive,
+		LastConfirmedAt:  r.LastConfirmedAt,
+		CreatedAt:        r.CreatedAt,
+		UpdatedAt:        r.UpdatedAt,
 	}
 }

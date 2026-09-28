@@ -1,9 +1,10 @@
 package handler
 
 import (
+	"cmp"
 	"log/slog"
 	"net/http"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -149,9 +150,7 @@ func (h *MatchingHandler) Candidates(c echo.Context) error {
 		sem := make(chan struct{}, 2)
 		var wg sync.WaitGroup
 		for idx := range entries {
-			wg.Add(1)
-			go func(idx int) {
-				defer wg.Done()
+			wg.Go(func() {
 				sem <- struct{}{}
 				defer func() { <-sem }()
 
@@ -195,13 +194,13 @@ func (h *MatchingHandler) Candidates(c echo.Context) error {
 				if entries[idx].item.AIScore != nil {
 					entries[idx].item.FinalScore = int(float64(entries[idx].item.Score)*0.6 + float64(*entries[idx].item.AIScore)*0.4)
 				}
-			}(idx)
+			})
 		}
 		wg.Wait()
 	}
 
-	sort.SliceStable(entries, func(i, j int) bool {
-		return entries[i].item.FinalScore > entries[j].item.FinalScore
+	slices.SortStableFunc(entries, func(a, b entry) int {
+		return cmp.Compare(b.item.FinalScore, a.item.FinalScore)
 	})
 
 	mode := c.QueryParam("mode")
@@ -343,11 +342,11 @@ func (h *MatchingHandler) Invitations(c echo.Context) error {
 		})
 	}
 
-	sort.SliceStable(out, func(i, j int) bool {
-		if rank[out[i].Status] != rank[out[j].Status] {
-			return rank[out[i].Status] < rank[out[j].Status]
+	slices.SortStableFunc(out, func(a, b dto.Invitation) int {
+		if ra, rb := rank[a.Status], rank[b.Status]; ra != rb {
+			return cmp.Compare(ra, rb)
 		}
-		return out[i].DeadlineAt.Before(out[j].DeadlineAt)
+		return a.DeadlineAt.Compare(b.DeadlineAt)
 	})
 
 	return c.JSON(http.StatusOK, out)

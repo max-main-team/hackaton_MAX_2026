@@ -17,3 +17,6 @@ tidy:
 
 swag:
 	swag init -g cmd/server/main.go --parseDependency --parseDepth 2 -o docs
+
+modernize:
+	go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -fix ./...

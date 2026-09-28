@@ -43,13 +43,11 @@ func ValidateCompanyInput(in *CompanyInput) error {
 
 func FromCompany(c repository.Company) Company {
 	return Company{
-		CompanyInput: CompanyInput{
-			Name:        c.Name,
-			Description: c.Description,
-			Website:     c.Website,
-			LogoURL:     c.LogoURL,
-			Address:     c.Address,
-		},
+		Name:        c.Name,
+		Description: c.Description,
+		Website:     c.Website,
+		LogoURL:     c.LogoURL,
+		Address:     c.Address,
 		ID:          c.ID,
 		Verified:    c.Verified,
 		BotUserID:   c.BotUserID,
@@ -110,24 +108,22 @@ func ValidateVacancyInput(in *VacancyInput) error {
 
 func FromVacancy(v repository.Vacancy) Vacancy {
 	return Vacancy{
-		VacancyInput: VacancyInput{
-			Title:               v.Title,
-			Description:         v.Description,
-			RequiredSkills:      v.RequiredSkills,
-			MinExperienceMonths: v.MinExperienceMonths,
-			City:                v.City,
-			WorkFormat:          v.WorkFormat,
-			EmploymentType:      v.EmploymentType,
-			SalaryMin:           v.SalaryMin,
-			SalaryMax:           v.SalaryMax,
-			ResponseTTLHours:    v.ResponseTTLHours,
-			Lat:                 v.Lat,
-			Lng:                 v.Lng,
-		},
-		ID:        v.ID,
-		CompanyID: v.CompanyID,
-		IsActive:  v.IsActive,
-		CreatedAt: v.CreatedAt,
-		UpdatedAt: v.UpdatedAt,
+		Title:               v.Title,
+		Description:         v.Description,
+		RequiredSkills:      v.RequiredSkills,
+		MinExperienceMonths: v.MinExperienceMonths,
+		City:                v.City,
+		WorkFormat:          v.WorkFormat,
+		EmploymentType:      v.EmploymentType,
+		SalaryMin:           v.SalaryMin,
+		SalaryMax:           v.SalaryMax,
+		ResponseTTLHours:    v.ResponseTTLHours,
+		Lat:                 v.Lat,
+		Lng:                 v.Lng,
+		ID:                  v.ID,
+		CompanyID:           v.CompanyID,
+		IsActive:            v.IsActive,
+		CreatedAt:           v.CreatedAt,
+		UpdatedAt:           v.UpdatedAt,
 	}
 }

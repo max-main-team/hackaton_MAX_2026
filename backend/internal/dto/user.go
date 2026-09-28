@@ -5,6 +5,7 @@ package dto
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"max-miniapp/backend/internal/repository"
@@ -69,10 +70,8 @@ type RoleRequest struct {
 var Roles = []string{"candidate", "recruiter"}
 
 func ValidateRole(role string) error {
-	for _, r := range Roles {
-		if r == role {
-			return nil
-		}
+	if slices.Contains(Roles, role) {
+		return nil
 	}
 	return fmt.Errorf("role must be one of: %v", Roles)
 }
