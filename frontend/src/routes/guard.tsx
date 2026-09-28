@@ -27,11 +27,12 @@ export function Guard({ role, allowNoRole, children }: GuardProps) {
   }
 
   const user = getStoredUser<{ role: string } | null>()
-  if ((!user || !user.role) && !allowNoRole) {
+  const hasRole = !!user?.role
+  if (!hasRole && !allowNoRole) {
     return <Navigate to="/onboarding" replace />
   }
-  if (role && user.role !== role) {
-    return <Navigate to={homeFor(user.role)} replace />
+  if (role && user?.role !== role) {
+    return <Navigate to={homeFor(user?.role)} replace />
   }
   return <>{children}</>
 }
