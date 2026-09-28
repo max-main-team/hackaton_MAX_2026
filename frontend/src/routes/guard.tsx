@@ -2,24 +2,12 @@ import { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { getToken, getStoredUser } from '../lib/session'
-import { getWebApp } from '../lib/max'
-
-export function homeFor(role: string | null | undefined): string {
-  if (role === 'candidate') return '/resume'
-  if (role === 'recruiter') return '/company'
-  return '/onboarding'
-}
-
-interface GuardProps {
-  role?: 'candidate' | 'recruiter'
-  children: ReactNode
-}
+import { callBridge } from '../lib/max'
+import { homeFor } from './home'
 
 export function Guard({ role, children }: GuardProps) {
   useEffect(() => {
-    const app = getWebApp()
-    app?.ready()
-    app?.expand()
+    callBridge((app) => app.enableClosingConfirmation?.())
   }, [])
 
   if (!getToken()) {
@@ -33,6 +21,11 @@ export function Guard({ role, children }: GuardProps) {
   if (role && user.role !== role) {
     return <Navigate to={homeFor(user.role)} replace />
   }
-  void location
   return <>{children}</>
 }
+
+interface GuardProps {
+  role?: 'candidate' | 'recruiter'
+  children: ReactNode
+}
+

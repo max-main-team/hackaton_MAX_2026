@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { Guard } from './guard'
 import Login from './login'
+import ErrorScreen from './error'
 import Onboarding from './onboarding'
 import ResumeScreen from './candidate/resume'
 import InvitationsScreen from './candidate/invitations'
@@ -13,7 +14,11 @@ import CandidateList from './recruiter/candidate-list'
 import MapScreen from './map'
 
 export const router = createBrowserRouter([
-  { path: '/', element: <Login /> },
+  {
+    path: '/',
+    element: <Login />,
+    errorElement: <ErrorScreen />,
+  },
   {
     path: '/onboarding',
     element: (
