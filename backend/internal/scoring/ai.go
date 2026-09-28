@@ -2,6 +2,7 @@ package scoring
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -53,7 +54,7 @@ type chatResponse struct {
 
 // ScoreAI оценивает соответствие резюме вакансии через LLM
 // (OpenAI-совместимый API: z.ai / bigmodel / любой другой).
-func (c *AIClient) ScoreAI(vacancy, resume any) (AIResult, error) {
+func (c *AIClient) ScoreAI(ctx context.Context, vacancy, resume any) (AIResult, error) {
 	if !c.Enabled() {
 		return AIResult{}, fmt.Errorf("AI is not configured")
 	}
@@ -81,7 +82,7 @@ func (c *AIClient) ScoreAI(vacancy, resume any) (AIResult, error) {
 		return AIResult{}, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, c.baseURL+"/chat/completions", bytes.NewReader(reqBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/chat/completions", bytes.NewReader(reqBody))
 	if err != nil {
 		return AIResult{}, err
 	}

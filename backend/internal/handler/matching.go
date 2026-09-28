@@ -2,6 +2,7 @@ package handler
 
 import (
 	"cmp"
+	"context"
 	"log/slog"
 	"net/http"
 	"slices"
@@ -146,54 +147,68 @@ func (h *MatchingHandler) Candidates(c echo.Context) error {
 		}})
 	}
 
-	if h.ai.Enabled() && len(entries) > 0 {
-		sem := make(chan struct{}, 2)
+	aiMissing := false
+	if h.ai.Enabled() {
+		for idx := range entries {
+			r := entries[idx].item.Resume
+			cached, err := h.scores.GetScore(ctx, r.ID, vacancyID)
+			if err == nil && cached != nil && cached.AIScore != nil {
+				entries[idx].item.AIScore = cached.AIScore
+				entries[idx].item.AIComment = cached.AIComment
+				entries[idx].item.FinalScore = int(float64(entries[idx].item.Score)*0.6 + float64(*entries[idx].item.AIScore)*0.4)
+				continue
+			}
+			if err != nil {
+				h.log.Error("get cached score failed", slog.Any("err", err))
+			}
+			aiMissing = true
+		}
+	}
+	if aiMissing {
+		// AI-обогащение в фоне: ответ не блокируем, оценки дозаполнятся к следующему запросу
+		sem := make(chan struct{}, 4)
 		var wg sync.WaitGroup
 		for idx := range entries {
+			if entries[idx].item.AIScore != nil {
+				continue
+			}
 			wg.Go(func() {
 				sem <- struct{}{}
-				defer func() { <-sem }()
+				defer func() {
+					<-sem
+					if r := recover(); r != nil {
+						h.log.Error("ai enrichment panic", slog.Any("err", r))
+					}
+				}()
 
 				r := entries[idx].item.Resume
-				cached, err := h.scores.GetScore(ctx, r.ID, vacancyID)
-				if err == nil && cached != nil && cached.AIScore != nil {
-					entries[idx].item.AIScore = cached.AIScore
-					entries[idx].item.AIComment = cached.AIComment
-				} else {
-					if err != nil {
-						h.log.Error("get cached score failed", slog.Any("err", err))
-					}
-					result, err := h.ai.ScoreAI(vac, scoring.Resume{
+				bgCtx, cancel := context.WithTimeout(context.Background(), time.Minute)
+				defer cancel()
+				result, err := h.ai.ScoreAI(bgCtx, vac, scoring.Resume{
+					Skills:           r.Skills,
+					ExperienceMonths: r.ExperienceMonths,
+					City:             r.City,
+					WorkFormat:       r.WorkFormat,
+				})
+				if err != nil && strings.Contains(err.Error(), "429") {
+					time.Sleep(3 * time.Second)
+					result, err = h.ai.ScoreAI(bgCtx, vac, scoring.Resume{
 						Skills:           r.Skills,
 						ExperienceMonths: r.ExperienceMonths,
 						City:             r.City,
 						WorkFormat:       r.WorkFormat,
 					})
-					if err != nil && strings.Contains(err.Error(), "429") {
-						time.Sleep(3 * time.Second)
-						result, err = h.ai.ScoreAI(vac, scoring.Resume{
-							Skills:           r.Skills,
-							ExperienceMonths: r.ExperienceMonths,
-							City:             r.City,
-							WorkFormat:       r.WorkFormat,
-						})
-					}
-					if err != nil {
-						h.log.Error("ai scoring failed", slog.Any("err", err))
-						return
-					}
-					ai := result.Score
-					entries[idx].item.AIScore = &ai
-					entries[idx].item.AIComment = result.Comment
-					_ = h.scores.UpsertScore(ctx, repository.ResumeScore{
-						ResumeID: r.ID, VacancyID: vacancyID,
-						AlgoScore: entries[idx].item.Score, AIScore: &ai,
-						AIComment: result.Comment, AIModel: h.aiModel,
-					})
 				}
-				if entries[idx].item.AIScore != nil {
-					entries[idx].item.FinalScore = int(float64(entries[idx].item.Score)*0.6 + float64(*entries[idx].item.AIScore)*0.4)
+				if err != nil {
+					h.log.Error("ai scoring failed", slog.Any("err", err))
+					return
 				}
+				ai := result.Score
+				_ = h.scores.UpsertScore(ctx, repository.ResumeScore{
+					ResumeID: r.ID, VacancyID: vacancyID,
+					AlgoScore: entries[idx].item.Score, AIScore: &ai,
+					AIComment: result.Comment, AIModel: h.aiModel,
+				})
 			})
 		}
 		wg.Wait()
@@ -202,7 +217,6 @@ func (h *MatchingHandler) Candidates(c echo.Context) error {
 	slices.SortStableFunc(entries, func(a, b entry) int {
 		return cmp.Compare(b.item.FinalScore, a.item.FinalScore)
 	})
-
 	mode := c.QueryParam("mode")
 	limit, _ := strconv.Atoi(c.QueryParam("limit"))
 	offset, _ := strconv.Atoi(c.QueryParam("offset"))
