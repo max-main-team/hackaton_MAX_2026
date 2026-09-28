@@ -16,7 +16,11 @@ export default function ErrorScreen() {
       <button
         className="btn btn-secondary"
         onClick={() => {
-          callBridge((app) => app.close?.())
+          callBridge((app) => {
+            if (typeof app.BackButton !== 'undefined') {
+              /* MAX не даёт закрыть апп программно — ведём на главную */
+            }
+          })
           navigate('/')
         }}
       >

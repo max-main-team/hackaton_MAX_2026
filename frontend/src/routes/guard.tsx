@@ -3,7 +3,12 @@ import { Navigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { getToken, getStoredUser } from '../lib/session'
 import { callBridge } from '../lib/max'
-import { homeFor } from './home'
+
+export function homeFor(role: string | null | undefined): string {
+  if (role === 'candidate') return '/resume'
+  if (role === 'recruiter') return '/company'
+  return '/onboarding'
+}
 
 export function Guard({ role, children }: GuardProps) {
   useEffect(() => {
