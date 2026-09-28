@@ -44,6 +44,11 @@ type AuthRequest struct {
 	InitData string `json:"initData" example:"user=%7B%22id%22%3A42%7D&auth_date=1771409719&hash=..."`
 }
 
+type DemoAuthRequest struct {
+	UserID    int64  `json:"userId" example:"700000123"`
+	FirstName string `json:"firstName" example:"Demo"`
+}
+
 type AuthResponse struct {
 	Token        string `json:"token" example:"eyJhbGciOiJIUzI1NiIs..."`
 	User         User   `json:"user"`

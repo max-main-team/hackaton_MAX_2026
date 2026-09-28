@@ -8,6 +8,10 @@ export function auth(initData: string): Promise<AuthResponse> {
   })
 }
 
+export function demoAuth(): Promise<AuthResponse> {
+  return request<AuthResponse>('/auth/demo', { method: 'POST', body: '{}' })
+}
+
 export function me(): Promise<MeResponse> {
   return request<MeResponse>('/me')
 }

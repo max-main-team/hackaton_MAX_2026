@@ -99,3 +99,55 @@ func (h *AuthHandler) Auth(c echo.Context) error {
 		ReferralCode: fmt.Sprintf("ref_%d", saved.ID),
 	})
 }
+
+// DemoAuth выдаёт JWT без MAX — только для разработки и тестов UI в браузере.
+//
+//	@Summary     Демо-вход (только dev)
+//	@Description Создаёт/возвращает тестового пользователя и JWT. В prod отключён.
+//	@Tags        auth
+//	@Accept      json
+//	@Produce     json
+//	@Param       request body dto.DemoAuthRequest false "параметры тестового пользователя"
+//	@Success     200 {object} dto.AuthResponse
+//	@Failure     403 {object} dto.ErrorResponse
+//	@Router      /api/v1/auth/demo [post]
+func (h *AuthHandler) DemoAuth(c echo.Context) error {
+	if h.cfg.Env == "prod" {
+		return echo.NewHTTPError(http.StatusForbidden, "demo login is disabled in production")
+	}
+
+	var req dto.DemoAuthRequest
+	_ = c.Bind(&req)
+
+	id := req.UserID
+	if id == 0 {
+		id = 700000000 + time.Now().UnixMilli()%100000
+	}
+	firstName := req.FirstName
+	if firstName == "" {
+		firstName = "Demo"
+	}
+
+	saved, err := h.users.UpsertUser(c.Request().Context(), repository.User{
+		ID:           id,
+		Username:     fmt.Sprintf("demo_%d", id),
+		FirstName:    firstName,
+		LanguageCode: "ru",
+	})
+	if err != nil {
+		h.log.Error("demo upsert user failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+
+	token, err := auth.Issue(saved.ID, h.cfg.JWTSecret, time.Now())
+	if err != nil {
+		h.log.Error("issue token failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+
+	return c.JSON(http.StatusOK, dto.AuthResponse{
+		Token:        token,
+		User:         dto.FromUser(saved),
+		ReferralCode: fmt.Sprintf("ref_%d", saved.ID),
+	})
+}

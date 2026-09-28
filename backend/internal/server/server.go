@@ -76,6 +76,7 @@ func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 	api := s.echo.Group("/api/v1")
 	api.GET("/health", health.Health)
 	api.POST("/auth", authH.Auth)
+	api.POST("/auth/demo", authH.DemoAuth)
 
 	private := api.Group("")
 	private.Use(middleware.RequireAuth(s.cfg.JWTSecret))

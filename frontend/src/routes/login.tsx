@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { auth, me } from '../api/auth'
+import { auth, demoAuth, me } from '../api/auth'
 import { getInitData } from '../lib/max'
 import { getToken, setStoredUser, setToken } from '../lib/session'
 import type { MeResponse } from '../api/types'
@@ -54,7 +54,7 @@ export default function Login() {
 
   const demoLogin = () => {
     setStatus('checking')
-    auth('')
+    demoAuth()
       .then((res) => {
         setToken(res.token)
         setStoredUser(res.user)
