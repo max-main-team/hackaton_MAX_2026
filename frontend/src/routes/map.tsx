@@ -8,19 +8,27 @@ declare global {
   }
 }
 
-let ymapsLoaded = false
-let ymapsPending: ((v: void) => void)[] = []
+let ymapsScriptLoaded = false
 
-function loadYmaps(): Promise<void> {
-  if (ymapsLoaded) return Promise.resolve()
-  if (ymapsPending.length) return new Promise(v => ymapsPending.push(v))
-
-  ymapsPending.push(() => { ymapsLoaded = true; ymapsPending.forEach(f => f()) })
-  const script = document.createElement('script')
-  script.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU'
-  script.onload = () => { ymapsPending.forEach(f => f()); ymapsPending = [] }
-  document.head.appendChild(script)
-  return new Promise(v => ymapsPending.push(v))
+function ensureYmaps(): Promise<void> {
+  if (ymapsScriptLoaded && window.ymaps) return Promise.resolve()
+  return new Promise(resolve => {
+    const check = () => {
+      if (window.ymaps?.ready) {
+        window.ymaps.ready(() => resolve())
+      } else {
+        setTimeout(check, 200)
+      }
+    }
+    if (window.ymaps) {
+      check()
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU'
+    script.onload = () => check()
+    document.head.appendChild(script)
+  })
 }
 
 export default function MapScreen() {
@@ -36,37 +44,39 @@ export default function MapScreen() {
 
   useEffect(() => {
     if (!items || !items.length || !mapRef.current) return
-    loadYmaps().then(() => {
-      if (!window.ymaps) return
+    if (!window.ymaps) return
 
-      const map = new window.ymaps.Map(mapRef.current, {
-        center: [59.9386, 30.3141],
-        zoom: 11,
-        controls: ['zoomControl', 'fullscreenControl']
-      })
-
-      items.forEach((v) => {
-        if (!v.lat || !v.lng) return
-        const placemark = new window.ymaps.Placemark([v.lat, v.lng], {
-          balloonContentHeader: v.title,
-          balloonContentBody: `${v.company_name}${v.verified ? ' ✓' : ''}<br/>${v.city || ''}`,
-          balloonContentFooter: v.salary_min ? `от ${v.salary_min}₽` : ''
-        }, {
-          preset: 'islands#blueDotIcon',
-          iconColor: '#5288c1'
-        })
-        map.geoObjects.add(placemark)
-      })
-
-      if (items.length === 1) {
-        map.setCenter([items[0].lat, items[0].lng], 13)
-      } else if (items.length > 1) {
-        const lats = items.map(v => v.lat)
-        const lngs = items.map(v => v.lng)
-        map.setBounds([[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]], { checkZoomRange: true })
-      }
+    const map = new window.ymaps.Map(mapRef.current, {
+      center: [59.9386, 30.3141],
+      zoom: 11,
+      controls: ['zoomControl', 'fullscreenControl']
     })
+
+    items.forEach((v) => {
+      if (!v.lat || !v.lng) return
+      const placemark = new window.ymaps.Placemark([v.lat, v.lng], {
+        balloonContentHeader: v.title,
+        balloonContentBody: `${v.company_name}${v.verified ? ' ✓' : ''}<br/>${v.city || ''}`,
+        balloonContentFooter: v.salary_min ? `от ${v.salary_min}₽` : ''
+      }, {
+        preset: 'islands#blueDotIcon',
+        iconColor: '#5288c1'
+      })
+      map.geoObjects.add(placemark)
+    })
+
+    if (items.length === 1) {
+      map.setCenter([items[0].lat, items[0].lng], 13)
+    } else if (items.length > 1) {
+      const lats = items.map(v => v.lat)
+      const lngs = items.map(v => v.lng)
+      map.setBounds([[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]], { checkZoomRange: true })
+    }
   }, [items])
+
+  useEffect(() => {
+    ensureYmaps()
+  }, [])
 
   return (
     <main className="page">
