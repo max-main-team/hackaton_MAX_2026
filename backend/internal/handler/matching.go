@@ -211,7 +211,6 @@ func (h *MatchingHandler) Candidates(c echo.Context) error {
 				})
 			})
 		}
-		wg.Wait()
 	}
 
 	slices.SortStableFunc(entries, func(a, b entry) int {
