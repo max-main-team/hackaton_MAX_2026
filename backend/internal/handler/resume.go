@@ -226,6 +226,7 @@ func (h *ResumeHandler) Parse(c echo.Context) error {
 		ExperienceMonths: draft.ExperienceMonths,
 		About:            draft.About,
 		Education:        draft.Education,
+		Links:            "[]",
 		City:             draft.City,
 		WorkFormat:       draft.WorkFormat,
 		EmploymentType:   draft.EmploymentType,
