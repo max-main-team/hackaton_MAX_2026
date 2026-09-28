@@ -1,8 +1,0 @@
-- main [ref=e3]:
-  - heading "MAX Mini App" [level=1] [ref=e4]
-  - paragraph [ref=e5]: Реверс-найм внутри MAX · хакатон 2026
-  - generic [ref=e6]:
-    - generic [ref=e7]: Не удалось войти
-    - generic [ref=e8]: Откройте мини-приложение через MAX
-  - button "Демо-вход" [ref=e9] [cursor=pointer]
-  - generic [ref=e10]: "eclipse-sim.ru · CI/CD: GitHub Actions"
