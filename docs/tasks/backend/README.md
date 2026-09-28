@@ -39,3 +39,4 @@
 | T-23 | Рефералка: start_param, /my/referrals | ✅ | T-03 | [T-23-referral-api.md](./T-23-referral-api.md) |
 | T-25 | Карта: координаты городов, GET /vacancies/map | ✅ | T-07 | [T-25-map-api.md](./T-25-map-api.md) |
 | T-27 | AI-скоринг (обвязка z.ai/OpenAI-совместимый, фолбэк на алго) | ✅ | T-08 | [T-27-ai-scoring.md](./T-27-ai-scoring.md) |
+| T-28 | Логика бота: long polling, ответы, кнопки | ✅ | T-12 | [T-28-bot-chat.md](./T-28-bot-chat.md) |

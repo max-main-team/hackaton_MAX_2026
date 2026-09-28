@@ -1,6 +1,6 @@
 # T-28 — Логика бота в MAX (чат)
 
-- **Статус:** ⬜
+- **Статус:** ✅
 - **Спека:** docs/max/bot-api.md (GET /updates, POST /messages, POST /answers)
 - **Зависимости:** T-12 (общий MAX_BOT_TOKEN)
 
