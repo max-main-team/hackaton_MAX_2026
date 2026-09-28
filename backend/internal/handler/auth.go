@@ -112,12 +112,14 @@ func (h *AuthHandler) Auth(c echo.Context) error {
 //	@Failure     403 {object} dto.ErrorResponse
 //	@Router      /api/v1/auth/demo [post]
 func (h *AuthHandler) DemoAuth(c echo.Context) error {
-	if h.cfg.Env == "prod" {
-		return echo.NewHTTPError(http.StatusForbidden, "demo login is disabled in production")
-	}
-
 	var req dto.DemoAuthRequest
 	_ = c.Bind(&req)
+
+	// Хакатон: демо-вход открыт и на проде, но создаёт только тестовых
+	// пользователей в диапазоне 700000000–799999999.
+	if req.UserID != 0 && (req.UserID < 700000000 || req.UserID > 799999999) {
+		req.UserID = 0
+	}
 
 	id := req.UserID
 	if id == 0 {
