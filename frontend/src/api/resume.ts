@@ -1,5 +1,5 @@
 import { request } from './client'
-import type { Resume, ResumeInput } from './types'
+import type { ParseResumeResult, Resume, ResumeInput } from './types'
 
 export function getResume(): Promise<Resume> {
   return request<Resume>('/my/resume')
@@ -13,5 +13,12 @@ export function confirmActivity(active: boolean): Promise<Resume> {
   return request<Resume>('/my/resume/confirm-activity', {
     method: 'POST',
     body: JSON.stringify({ active }),
+  })
+}
+
+export function parseResume(text: string, sourceName: string): Promise<ParseResumeResult> {
+  return request<ParseResumeResult>('/my/resume/parse', {
+    method: 'POST',
+    body: JSON.stringify({ text, source_name: sourceName }),
   })
 }

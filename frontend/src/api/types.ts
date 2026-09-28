@@ -41,6 +41,16 @@ export interface ResumeInput {
   salary_max: number | null
 }
 
+export interface ParseResumeResult {
+  resume: Resume
+  ai_comment: string
+}
+
+export interface ParseResumeResult {
+  resume: Resume
+  ai_comment: string
+}
+
 export interface Resume extends ResumeInput {
   id: number
   user_id: number

@@ -28,3 +28,13 @@ type ReferralItem struct {
 type VerifyRequest struct {
 	BotToken string `json:"bot_token"`
 }
+
+type ParseResumeRequest struct {
+	Text       string `json:"text" example:"Иван Петров, Go-разработчик, 4 года опыта..."`
+	SourceName string `json:"source_name" example:"resume.pdf"`
+}
+
+type ParseResumeResponse struct {
+	Resume    Resume `json:"resume"`
+	AIComment string `json:"ai_comment" example:"Извлекли должность, навыки, опыт; зарплату не нашли"`
+}

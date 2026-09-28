@@ -4,21 +4,29 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 
 	"max-miniapp/backend/internal/dto"
 	"max-miniapp/backend/internal/middleware"
 	"max-miniapp/backend/internal/repository"
+	"max-miniapp/backend/internal/scoring"
+)
+
+const (
+	parseTextMaxLen = 30_000
+	parseTextMinLen = 50
 )
 
 type ResumeHandler struct {
 	resumes *repository.ResumeRepo
+	ai      *scoring.AIClient
 	log     *slog.Logger
 }
 
-func NewResumeHandler(resumes *repository.ResumeRepo, log *slog.Logger) *ResumeHandler {
-	return &ResumeHandler{resumes: resumes, log: log}
+func NewResumeHandler(resumes *repository.ResumeRepo, ai *scoring.AIClient, log *slog.Logger) *ResumeHandler {
+	return &ResumeHandler{resumes: resumes, ai: ai, log: log}
 }
 
 // Get возвращает резюме текущего кандидата.
@@ -158,4 +166,87 @@ func (h *ResumeHandler) ConfirmActivity(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, dto.FromResume(resume))
+}
+
+// Parse структурирует текст резюме (извлечённый на фронте из PDF) в черновик через AI.
+//
+//	@Summary     Распарсить текст резюме
+//	@Description Принимает текст резюме, AI извлекает поля по нашей схеме.
+//	@Description Создаёт черновик (source=file_parse, is_active=false, source_text сохранён).
+//	@Description Если AI недоступен — черновик только с текстом, поля пустые.
+//	@Tags        resume
+//	@Accept      json
+//	@Produce     json
+//	@Param       request body dto.ParseResumeRequest true "текст резюме"
+//	@Success     200 {object} dto.ParseResumeResponse
+//	@Failure     400 {object} dto.ErrorResponse
+//	@Failure     401 {object} dto.ErrorResponse
+//	@Failure     500 {object} dto.ErrorResponse
+//	@Security    BearerAuth
+//	@Router      /api/v1/my/resume/parse [post]
+func (h *ResumeHandler) Parse(c echo.Context) error {
+	userID, err := middleware.UserIDFromContext(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	var in dto.ParseResumeRequest
+	if err := c.Bind(&in); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	}
+	text := strings.TrimSpace(in.Text)
+	if text == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "text is required")
+	}
+	if len(text) > parseTextMaxLen {
+		text = text[:parseTextMaxLen]
+	}
+
+	ctx := c.Request().Context()
+	draft, err := h.ai.ExtractResume(ctx, text)
+	notes := draft.Notes
+	if err != nil {
+		h.log.Error("ai extract resume failed", slog.Any("err", err))
+		notes = "Не удалось автоматически распознать текст — заполните поля вручную."
+	}
+
+	existing, err := h.resumes.GetByUserID(ctx, userID)
+	switch {
+	case errors.Is(err, repository.ErrResumeNotFound):
+		existing = repository.Resume{IsActive: false}
+	case err != nil:
+		h.log.Error("get resume failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+
+	resumeInput := repository.Resume{
+		UserID:           userID,
+		Title:            draft.Title,
+		Skills:           draft.Skills,
+		ExperienceMonths: draft.ExperienceMonths,
+		About:            draft.About,
+		Education:        draft.Education,
+		City:             draft.City,
+		WorkFormat:       draft.WorkFormat,
+		EmploymentType:   draft.EmploymentType,
+		SalaryMin:        draft.SalaryMin,
+		SalaryMax:        draft.SalaryMax,
+		Source:           "file_parse",
+		SourceText:       text,
+		IsActive:         existing.IsActive,
+	}
+	if existing.ID == 0 {
+		resumeInput.IsActive = false
+	}
+
+	saved, err := h.resumes.UpsertResume(ctx, resumeInput)
+	if err != nil {
+		h.log.Error("upsert parsed resume failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+
+	return c.JSON(http.StatusOK, dto.ParseResumeResponse{
+		Resume:    dto.FromResume(saved),
+		AIComment: notes,
+	})
 }

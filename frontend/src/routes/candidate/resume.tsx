@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { confirmActivity, getResume, saveResume } from '../../api/resume'
+import { useEffect, useRef, useState } from 'react'
+import { confirmActivity, getResume, parseResume, saveResume } from '../../api/resume'
 import type { Resume, ResumeInput, ResumeLink } from '../../api/types'
 import { EMPLOYMENT_TYPES, WORK_FORMATS, WORK_FORMAT_LABELS } from '../../api/types'
 
@@ -16,6 +16,8 @@ const EMPTY_FORM: ResumeInput = {
   salary_min: null,
   salary_max: null,
 }
+
+const MAX_PDF_BYTES = 10 * 1024 * 1024
 
 function parseLinks(raw: string | ResumeLink[] | null | undefined): ResumeLink[] {
   if (Array.isArray(raw)) return raw
@@ -34,7 +36,9 @@ export default function ResumeScreen() {
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [stage, setStage] = useState<'idle' | 'extracting' | 'parsing'>('idle')
   const [confirmed, setConfirmed] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     getResume()
@@ -67,12 +71,18 @@ export default function ResumeScreen() {
     setSaved(false)
   }
 
+  const validate = (): string | null => {
+    if (!form.title.trim()) return 'Укажите желаемую должность'
+    return null
+  }
+
   const save = async () => {
-    setError('')
-    if (!form.title.trim()) {
-      setError('Укажите желаемую должность')
+    const problem = validate()
+    if (problem) {
+      setError(problem)
       return
     }
+    setError('')
     const cleanedLinks = links.filter((l) => l.type.trim() && l.url.trim())
     try {
       const savedResume: Resume = await saveResume({ ...form, links: cleanedLinks })
@@ -93,6 +103,46 @@ export default function ResumeScreen() {
     }
   }
 
+  const uploadPdf = async (file: File) => {
+    setError('')
+    if (file.size > MAX_PDF_BYTES) {
+      setError('Файл больше 10 МБ')
+      return
+    }
+    try {
+      setStage('extracting')
+      const { extractPdfText } = await import('../../lib/pdf')
+      const text = await extractPdfText(file)
+
+      setStage('parsing')
+      const result = await parseResume(text, file.name)
+
+      const r = result.resume
+      setForm({
+        title: r.title,
+        skills: r.skills,
+        experience_months: r.experience_months,
+        about: r.about,
+        education: r.education,
+        links: [],
+        city: r.city,
+        work_format: r.work_format,
+        employment_type: r.employment_type,
+        salary_min: r.salary_min,
+        salary_max: r.salary_max,
+      })
+      setLinks(parseLinks(r.links))
+      setNotFound(false)
+      setSaved(false)
+      if (result.ai_comment) setError('')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setStage('idle')
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
   if (loading) {
     return (
       <main className="page">
@@ -104,7 +154,27 @@ export default function ResumeScreen() {
   return (
     <main className="page">
       <h1 className="page-title">Моё резюме</h1>
-      {notFound && <p className="muted">Заполните резюме — оно появится в подборках компаний</p>}
+      {notFound && <p className="muted">Заполните резюме или загрузите PDF — оно появится в подборках компаний</p>}
+
+      <div className="card">
+        <strong>Быстрый старт: загрузите PDF-резюме</strong>
+        <span className="muted">
+          Мы извлечём текст и AI заполнит поля. Проверьте и поправьте перед сохранением.
+        </span>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".pdf,application/pdf"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) void uploadPdf(file)
+          }}
+          disabled={stage !== 'idle'}
+          style={{ fontSize: 13 }}
+        />
+        {stage === 'extracting' && <p className="muted">Извлекаем текст из PDF…</p>}
+        {stage === 'parsing' && <p className="muted">AI распознаёт резюме… Это займёт до минуты</p>}
+      </div>
 
       <div className="card">
         <div className="field">

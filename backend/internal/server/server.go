@@ -54,18 +54,18 @@ func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 	resumes := repository.NewResumeRepo(pool)
 	companies := repository.NewCompanyRepo(pool)
 	vacancies := repository.NewVacancyRepo(pool)
-
-	authH := handler.NewAuthHandler(users, s.cfg, s.log)
-	meH := handler.NewMeHandler(users, s.log)
-	resumeH := handler.NewResumeHandler(resumes, s.log)
-	companyH := handler.NewCompanyHandler(companies, vacancies, s.log)
-	vacancyH := handler.NewVacancyHandler(companies, vacancies, s.log)
 	matchingRepo := repository.NewMatchingRepo(pool)
 	scoreRepo := repository.NewScoreRepo(pool)
 	aiClient := scoring.NewAIClient(s.cfg.AIAPIKey, s.cfg.AIBaseURL, s.cfg.AIModel)
 	if aiClient.Enabled() {
 		s.log.Info("ai scoring enabled", slog.String("base_url", s.cfg.AIBaseURL), slog.String("model", s.cfg.AIModel))
 	}
+
+	authH := handler.NewAuthHandler(users, s.cfg, s.log)
+	meH := handler.NewMeHandler(users, s.log)
+	resumeH := handler.NewResumeHandler(resumes, aiClient, s.log)
+	companyH := handler.NewCompanyHandler(companies, vacancies, s.log)
+	vacancyH := handler.NewVacancyHandler(companies, vacancies, s.log)
 	matchingH := handler.NewMatchingHandler(companies, vacancies, users, resumes, matchingRepo, scoreRepo, aiClient, s.cfg.AIModel, s.log)
 
 	s.echo.GET("/swagger/*any", echoSwagger.EchoWrapHandler())
@@ -84,6 +84,7 @@ func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 	private.POST("/me/role", meH.SetRole)
 	private.GET("/my/resume", resumeH.Get)
 	private.PUT("/my/resume", resumeH.Put)
+	private.POST("/my/resume/parse", resumeH.Parse)
 	private.POST("/my/resume/confirm-activity", resumeH.ConfirmActivity)
 	private.POST("/companies", companyH.Create)
 	private.GET("/my/companies", companyH.ListMine)
