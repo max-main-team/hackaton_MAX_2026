@@ -58,6 +58,7 @@ func run() error {
 	workerCtx, workerCancel := context.WithCancel(ctx)
 	defer workerCancel()
 	worker.NewSurveyWorker(pool, cfg.MaxBotToken, log).Start(workerCtx)
+	worker.NewBotWorker(pool, cfg.MaxBotToken, log).Start(workerCtx)
 
 	errCh := make(chan error, 1)
 	go func() {

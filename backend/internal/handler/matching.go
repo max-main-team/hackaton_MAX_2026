@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -145,7 +146,7 @@ func (h *MatchingHandler) Candidates(c echo.Context) error {
 	}
 
 	if h.ai.Enabled() && len(entries) > 0 {
-		sem := make(chan struct{}, 4)
+		sem := make(chan struct{}, 2)
 		var wg sync.WaitGroup
 		for idx := range entries {
 			wg.Add(1)
@@ -169,6 +170,15 @@ func (h *MatchingHandler) Candidates(c echo.Context) error {
 						City:             r.City,
 						WorkFormat:       r.WorkFormat,
 					})
+					if err != nil && strings.Contains(err.Error(), "429") {
+						time.Sleep(3 * time.Second)
+						result, err = h.ai.ScoreAI(vac, scoring.Resume{
+							Skills:           r.Skills,
+							ExperienceMonths: r.ExperienceMonths,
+							City:             r.City,
+							WorkFormat:       r.WorkFormat,
+						})
+					}
 					if err != nil {
 						h.log.Error("ai scoring failed", slog.Any("err", err))
 						return
