@@ -78,6 +78,9 @@ func (w *BotWorker) poll(ctx context.Context) error {
 		return fmt.Errorf("updates status %d: %s", resp.StatusCode, string(body))
 	}
 
+	rawBody, _ := io.ReadAll(resp.Body)
+	w.log.Info("bot poll raw", slog.Int("len", len(rawBody)), slog.String("body", string(rawBody)))
+
 	var parsed struct {
 		Updates []struct {
 			UpdateType string `json:"update_type"`
@@ -101,7 +104,7 @@ func (w *BotWorker) poll(ctx context.Context) error {
 		} `json:"updates"`
 		Marker json.Number `json:"marker"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
+	if err := json.Unmarshal(rawBody, &parsed); err != nil {
 		return fmt.Errorf("decode updates: %w", err)
 	}
 
