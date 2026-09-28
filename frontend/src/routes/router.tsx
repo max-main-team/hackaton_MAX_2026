@@ -22,7 +22,7 @@ export const router = createBrowserRouter([
   {
     path: '/onboarding',
     element: (
-      <Guard>
+      <Guard allowNoRole>
         <Onboarding />
       </Guard>
     ),

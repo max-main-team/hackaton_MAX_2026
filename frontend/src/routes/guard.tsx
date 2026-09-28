@@ -10,7 +10,14 @@ export function homeFor(role: string | null | undefined): string {
   return '/onboarding'
 }
 
-export function Guard({ role, children }: GuardProps) {
+interface GuardProps {
+  role?: 'candidate' | 'recruiter'
+  /** разрешить доступ без выбранной роли (нужно самому онбордингу) */
+  allowNoRole?: boolean
+  children: ReactNode
+}
+
+export function Guard({ role, allowNoRole, children }: GuardProps) {
   useEffect(() => {
     callBridge((app) => app.enableClosingConfirmation?.())
   }, [])
@@ -20,7 +27,7 @@ export function Guard({ role, children }: GuardProps) {
   }
 
   const user = getStoredUser<{ role: string } | null>()
-  if (!user || !user.role) {
+  if ((!user || !user.role) && !allowNoRole) {
     return <Navigate to="/onboarding" replace />
   }
   if (role && user.role !== role) {
@@ -28,9 +35,3 @@ export function Guard({ role, children }: GuardProps) {
   }
   return <>{children}</>
 }
-
-interface GuardProps {
-  role?: 'candidate' | 'recruiter'
-  children: ReactNode
-}
-
