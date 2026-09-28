@@ -83,16 +83,20 @@ func (w *BotWorker) poll(ctx context.Context) error {
 			UpdateType string `json:"update_type"`
 			Payload    struct {
 				CallbackID string `json:"callback_id"`
-				Message    struct {
+				Chat       struct {
+					ChatID int64 `json:"chat_id"`
+				} `json:"chat"`
+				User struct {
+					ID        int64  `json:"id"`
+					FirstName string `json:"first_name"`
+				} `json:"user"`
+				Message struct {
 					Text      string `json:"text"`
 					Timestamp int64  `json:"timestamp"`
 					Recipient struct {
 						ChatID int64 `json:"chat_id"`
 					} `json:"recipient"`
 				} `json:"message"`
-				User struct {
-					ID int64 `json:"id"`
-				} `json:"user"`
 			} `json:"payload"`
 		} `json:"updates"`
 		Marker json.Number `json:"marker"`
@@ -107,6 +111,15 @@ func (w *BotWorker) poll(ctx context.Context) error {
 
 	for _, u := range parsed.Updates {
 		switch u.UpdateType {
+		case "bot_started":
+			// нажатие «Начать» — приветствуем юзера в его диалоге с ботом
+			if uid := u.Payload.User.ID; uid != 0 {
+				if err := w.sendMessageToUser(ctx, uid); err != nil {
+					w.log.Error("bot_started greeting failed", slog.Int64("user_id", uid), slog.Any("err", err))
+				} else {
+					w.log.Info("bot_started greeting sent", slog.Int64("user_id", uid))
+				}
+			}
 		case "message_created":
 			// отвечаем только на свежие сообщения, чтобы не спамить при рестартах
 			if u.Payload.Message.Timestamp > 0 {
@@ -129,7 +142,18 @@ type keyboardButton struct {
 }
 
 func (w *BotWorker) replyGreeting(ctx context.Context, chatID int64) {
-	message := map[string]any{
+	if err := w.sendMessage(ctx, fmt.Sprintf("chat_id=%d", chatID), greetingMessage()); err != nil {
+		w.log.Error("bot reply failed", slog.Int64("chat_id", chatID), slog.Any("err", err))
+	}
+}
+
+// sendMessageToUser начинает диалог с пользователем по его ID из MAX.
+func (w *BotWorker) sendMessageToUser(ctx context.Context, userID int64) error {
+	return w.sendMessage(ctx, fmt.Sprintf("user_id=%d", userID), greetingMessage())
+}
+
+func greetingMessage() map[string]any {
+	return map[string]any{
 		"text": "Привет! 👋\n\nЯ помогаю находить работу по-новому: компании сами ищут тебя.\n\nЗаполни резюме в мини-приложении — и получай приглашения от компаний СПб.",
 		"attachments": []map[string]any{
 			{
@@ -143,9 +167,6 @@ func (w *BotWorker) replyGreeting(ctx context.Context, chatID int64) {
 			},
 		},
 		"notify": true,
-	}
-	if err := w.sendMessage(ctx, fmt.Sprintf("chat_id=%d", chatID), message); err != nil {
-		w.log.Error("bot reply failed", slog.Int64("chat_id", chatID), slog.Any("err", err))
 	}
 }
 
