@@ -3,6 +3,7 @@ import { Guard } from './guard'
 import Login from './login'
 import ErrorScreen from './error'
 import Onboarding from './onboarding'
+import WelcomeScreen from './welcome'
 import ResumeScreen from './candidate/resume'
 import InvitationsScreen from './candidate/invitations'
 import ReferralScreen from './candidate/referral'
@@ -25,6 +26,14 @@ export const router = createBrowserRouter([
     element: (
       <Guard allowNoRole>
         <Onboarding />
+      </Guard>
+    ),
+  },
+  {
+    path: '/welcome',
+    element: (
+      <Guard>
+        <WelcomeScreen />
       </Guard>
     ),
   },

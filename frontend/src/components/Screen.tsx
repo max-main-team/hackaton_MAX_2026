@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { TabBar } from './TabBar'
 import { Icon, type IconName } from './Icon'
-import { clearSession } from '../lib/session'
 import { setRole } from '../api/auth'
 import { setStoredUser } from '../lib/session'
 import type { MeResponse } from '../api/types'
@@ -18,18 +17,13 @@ interface ScreenProps {
 export function Screen({ role, title, icon, sub, children }: ScreenProps) {
   const navigate = useNavigate()
 
-  const logout = () => {
-    clearSession()
-    navigate('/', { replace: true })
-  }
-
   const switchRole = async () => {
     if (!role) return
     const next = role === 'candidate' ? 'recruiter' : 'candidate'
     try {
       const meData: MeResponse = await setRole(next, true)
       setStoredUser(meData.user)
-      navigate(next === 'candidate' ? '/resume' : '/company', { replace: true })
+      navigate('/welcome', { replace: true })
     } catch {
       navigate('/onboarding', { replace: true })
     }
@@ -47,14 +41,9 @@ export function Screen({ role, title, icon, sub, children }: ScreenProps) {
               </span>
             )}
             {role && (
-              <>
-                <button className="header-icon" title="Сменить роль" onClick={switchRole}>
-                  <Icon name="swap" />
-                </button>
-                <button className="header-icon" title="Выйти" onClick={logout}>
-                  <Icon name="logout" />
-                </button>
-              </>
+              <button className="header-icon" title="Сменить роль" onClick={switchRole}>
+                <Icon name="swap" />
+              </button>
             )}
           </div>
         </header>

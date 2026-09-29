@@ -21,7 +21,7 @@ export default function Onboarding() {
     try {
       const meData: MeResponse = await setRole(role, true)
       setStoredUser(meData.user)
-      navigate(role === 'candidate' ? '/resume' : '/company', { replace: true })
+      navigate('/welcome', { replace: true })
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -33,8 +33,7 @@ export default function Onboarding() {
     <main className="screen">
       <header className="screen-header">
         <h1>Кто вы?</h1>
-      </header>
-      <p className="screen-sub">Это определит ваш сценарий работы</p>
+      </header>      <p className="screen-sub">Это определит ваш сценарий работы</p>
 
       <div className="screen-body" style={{ paddingTop: 16, gap: 14 }}>
         <button
