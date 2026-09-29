@@ -41,8 +41,8 @@ export default function ResumeScreen() {
   const [error, setError] = useState('')
   const [stage, setStage] = useState<'idle' | 'extracting' | 'parsing'>('idle')
   const [elapsed, setElapsed] = useState(0)
-  const [confirmed, setConfirmed] = useState(false)
   const [experienceDraft, setExperienceDraft] = useState<string | null>(null)
+  const [confirmed, setConfirmed] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -90,6 +90,15 @@ export default function ResumeScreen() {
     setField('experience_months', clean === '' ? 0 : Number(clean))
   }
 
+  const confirm = async (active: boolean) => {
+    try {
+      await confirmActivity(active)
+      setConfirmed(active)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    }
+  }
+
   const validate = (): string | null => {
     if (!form.title.trim()) return 'Укажите желаемую должность'
     return null
@@ -108,15 +117,6 @@ export default function ResumeScreen() {
       setLinks(parseLinks(savedResume.links))
       setSaved(true)
       setNotFound(false)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    }
-  }
-
-  const confirm = async (active: boolean) => {
-    try {
-      await confirmActivity(active)
-      setConfirmed(active)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     }
@@ -324,6 +324,24 @@ export default function ResumeScreen() {
         </div>
       </div>
 
+      <div className="form-section" style={{ paddingBottom: 8 }}>
+        <p className="section-label">Подбор актуален?</p>
+        <div className="card gap-sm">
+          <span className="muted" style={{ fontSize: 12 }}>
+            Подтверждайте раз в неделю, чтобы компании вас видели
+          </span>
+          {confirmed && <span className="ok-text">Спасибо, подтвердили</span>}
+          <div className="row">
+            <button className="btn" style={{ flex: 1 }} onClick={() => confirm(true)}>
+              Актуально
+            </button>
+            <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => confirm(false)}>
+              Не ищу работу
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="form-section">
         <p className="section-label">О себе</p>
         <div className="fieldset">
@@ -382,23 +400,7 @@ export default function ResumeScreen() {
         Сохранить резюме
       </button>
 
-      <div className="form-section" style={{ paddingBottom: 8 }}>
-        <p className="section-label">Подбор актуален?</p>
-        <div className="card gap-sm">
-          <span className="muted" style={{ fontSize: 12 }}>
-            Подтверждайте раз в неделю, чтобы компании вас видели
-          </span>
-          {confirmed && <span className="ok-text">Спасибо, подтвердили</span>}
-          <div className="row">
-            <button className="btn" style={{ flex: 1 }} onClick={() => confirm(true)}>
-              Актуально
-            </button>
-            <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => confirm(false)}>
-              Не ищу работу
-            </button>
-          </div>
-        </div>
-      </div>
+
     </Screen>
   )
 }
