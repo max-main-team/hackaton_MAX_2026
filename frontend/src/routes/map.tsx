@@ -83,8 +83,10 @@ export default function MapScreen() {
           placemarkRefs.current.push(placemark)
         })
 
-        if (items.length === 1) {
-          map.setCenter([items[0].lat, items[0].lng], 12)
+        const uniquePoints = new Set(items.map((i) => `${i.lat},${i.lng}`))
+
+        if (items.length === 1 || uniquePoints.size === 1) {
+          map.setCenter([items[0].lat, items[0].lng], 11)
         } else if (items.length > 1) {
           map.setBounds(
             [
@@ -92,10 +94,11 @@ export default function MapScreen() {
               [Math.max(...items.map((i) => i.lat)), Math.max(...items.map((i) => i.lng))],
             ],
             { checkZoomRange: true, zoomMargin: [80, 80] },
-          )
-          if (map.getZoom() > 13) {
-            map.setZoom(13)
-          }
+          ).then(() => {
+            if (map.getZoom() > 13) {
+              map.setZoom(13)
+            }
+          })
         }
       })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
