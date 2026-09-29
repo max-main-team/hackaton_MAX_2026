@@ -4,6 +4,7 @@ import type { Resume, ResumeInput, ResumeLink } from '../../api/types'
 import { EMPLOYMENT_TYPES, WORK_FORMATS, WORK_FORMAT_LABELS } from '../../api/types'
 import { Screen } from '../../components/Screen'
 import { Icon } from '../../components/Icon'
+import { digits } from '../../components/format'
 
 const EMPTY_FORM: ResumeInput = {
   title: '',
@@ -76,8 +77,9 @@ export default function ResumeScreen() {
   }
 
   const setExperience = (raw: string) => {
-    setExperienceDraft(raw)
-    setField('experience_months', raw === '' ? 0 : Number(raw))
+    const clean = digits(raw)
+    setExperienceDraft(clean)
+    setField('experience_months', clean === '' ? 0 : Number(clean))
   }
 
   const validate = (): string | null => {
@@ -214,7 +216,7 @@ export default function ResumeScreen() {
             <span className="flabel">Опыт, мес</span>
             <input
               className="input plain"
-              type="number"
+              type="text" inputMode="numeric"
               placeholder="0"
               style={{ maxWidth: 90 }}
               value={experienceDraft ?? (form.experience_months === 0 ? '' : String(form.experience_months))}
@@ -269,20 +271,20 @@ export default function ResumeScreen() {
             <span className="range">
               <input
                 className="input plain"
-                type="number"
+                type="text" inputMode="numeric"
                 placeholder="от"
                 style={{ width: `${Math.max(4, String(form.salary_min ?? '').length + 1)}ch` }}
                 value={form.salary_min ?? ''}
-                onChange={(e) => setField('salary_min', e.target.value === '' ? null : Number(e.target.value))}
+                onChange={(e) => setField('salary_min', digits(e.target.value) === '' ? null : Number(digits(e.target.value)))}
               />
               <span className="range-dash">–</span>
               <input
                 className="input plain"
-                type="number"
+                type="text" inputMode="numeric"
                 placeholder="до"
                 style={{ width: `${Math.max(4, String(form.salary_max ?? '').length + 1)}ch` }}
                 value={form.salary_max ?? ''}
-                onChange={(e) => setField('salary_max', e.target.value === '' ? null : Number(e.target.value))}
+                onChange={(e) => setField('salary_max', digits(e.target.value) === '' ? null : Number(digits(e.target.value)))}
               />
               <span className="fvalue">₽</span>
             </span>

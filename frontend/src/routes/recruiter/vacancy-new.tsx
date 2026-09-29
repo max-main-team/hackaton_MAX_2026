@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { createVacancy, myCompanies } from '../../api/company'
 import type { VacancyInput } from '../../api/types'
 import { EMPLOYMENT_TYPES, WORK_FORMATS, WORK_FORMAT_LABELS } from '../../api/types'
+import { digits } from '../../components/format'
 import { TabBar } from '../../components/TabBar'
 
 const TTL_OPTIONS = [12, 24, 48, 72, 168]
@@ -128,13 +129,13 @@ export default function VacancyNew() {
               <span className="flabel">Опыт работы</span>
               <input
                 className="input plain"
-                type="number"
+                type="text" inputMode="numeric"
                 style={{ maxWidth: 90 }}
                 placeholder="0"
                 value={experienceDraft}
                 onChange={(e) => {
-                  setExperienceDraft(e.target.value)
-                  set('min_experience_months', e.target.value === '' ? 0 : Number(e.target.value))
+                  setExperienceDraft(digits(e.target.value))
+                  set('min_experience_months', digits(e.target.value) === '' ? 0 : Number(digits(e.target.value)))
                 }}
               />
             </div>
@@ -186,16 +187,16 @@ export default function VacancyNew() {
               <span className="range">
                 <input
                   className="input plain"
-                  type="number"
+                  type="text" inputMode="numeric"
                   placeholder="от"
                   style={{ width: `${Math.max(4, String(form.salary_min ?? '').length + 1)}ch` }}
                   value={form.salary_min ?? ''}
-                  onChange={(e) => set('salary_min', e.target.value === '' ? null : Number(e.target.value))}
+                  onChange={(e) => set('salary_min', digits(e.target.value) === '' ? null : Number(digits(e.target.value)))}
                 />
                 <span className="range-dash">–</span>
                 <input
                   className="input plain"
-                  type="number"
+                  type="text" inputMode="numeric"
                   placeholder="до"
                   style={{ width: `${Math.max(4, String(form.salary_max ?? '').length + 1)}ch` }}
                   value={form.salary_max ?? ''}

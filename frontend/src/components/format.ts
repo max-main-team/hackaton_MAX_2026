@@ -15,3 +15,7 @@ export function experienceLabel(months: number): string {
   const years = Math.round(months / 12)
   return years > 0 ? `${years} лет` : `${months} мес`
 }
+
+export function digits(raw: string): string {
+  return raw.replace(/[^0-9]/g, '')
+}

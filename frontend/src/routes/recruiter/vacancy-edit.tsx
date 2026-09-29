@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { companyVacancies, myCompanies, updateVacancy } from '../../api/company'
 import type { VacancyInput } from '../../api/types'
 import { EMPLOYMENT_TYPES, WORK_FORMATS, WORK_FORMAT_LABELS } from '../../api/types'
+import { digits } from '../../components/format'
 import { TabBar } from '../../components/TabBar'
 
 const TTL_OPTIONS = [12, 24, 48, 72, 168]
@@ -131,10 +132,10 @@ export default function VacancyEdit() {
                   <span className="flabel">Опыт работы</span>
                   <input
                     className="input plain"
-                    type="number"
+                    type="text" inputMode="numeric"
                     style={{ maxWidth: 90 }}
                     value={form.min_experience_months}
-                    onChange={(e) => set('min_experience_months', Number(e.target.value))}
+                    onChange={(e) => set('min_experience_months', Number(digits(e.target.value)))}
                   />
                 </div>
                 <hr className="divider" />
@@ -185,20 +186,20 @@ export default function VacancyEdit() {
                   <span className="range">
                     <input
                       className="input plain"
-                      type="number"
+                      type="text" inputMode="numeric"
                       placeholder="от"
                       style={{ width: `${Math.max(4, String(form.salary_min ?? '').length + 1)}ch` }}
                       value={form.salary_min ?? ''}
-                      onChange={(e) => set('salary_min', e.target.value === '' ? null : Number(e.target.value))}
+                      onChange={(e) => set('salary_min', digits(e.target.value) === '' ? null : Number(digits(e.target.value)))}
                     />
                     <span className="range-dash">–</span>
                     <input
                       className="input plain"
-                      type="number"
+                      type="text" inputMode="numeric"
                       placeholder="до"
                       style={{ width: `${Math.max(4, String(form.salary_max ?? '').length + 1)}ch` }}
                       value={form.salary_max ?? ''}
-                      onChange={(e) => set('salary_max', e.target.value === '' ? null : Number(e.target.value))}
+                      onChange={(e) => set('salary_max', digits(e.target.value) === '' ? null : Number(digits(e.target.value)))}
                     />
                     <span className="fvalue">₽</span>
                   </span>
