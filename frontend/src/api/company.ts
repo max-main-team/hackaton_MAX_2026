@@ -34,6 +34,16 @@ export function updateVacancy(
   return request<Vacancy>(`/vacancies/${id}`, { method: 'PATCH', body: JSON.stringify(patch) })
 }
 
+export function verifyCompany(
+  id: number,
+  botToken: string,
+): Promise<Company> {
+  return request<Company>(`/companies/${id}/verify`, {
+    method: 'POST',
+    body: JSON.stringify({ bot_token: botToken }),
+  })
+}
+
 export function companyReferrals(): Promise<CompanyReferralsResponse> {
   return request<CompanyReferralsResponse>('/my/company-referrals')
 }

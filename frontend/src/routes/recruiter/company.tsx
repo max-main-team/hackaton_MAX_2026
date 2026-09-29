@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { companyReferrals, createCompany, myCompanies } from '../../api/company'
+import { companyReferrals, createCompany, myCompanies, verifyCompany } from '../../api/company'
 import type { Company, CompanyReferralsResponse } from '../../api/types'
 import { Screen } from '../../components/Screen'
 import { VerifiedBadge } from '../../components/Badge'
@@ -22,14 +22,30 @@ export default function CompanyScreen() {
   const [error, setError] = useState('')
   const [referrals, setReferrals] = useState<CompanyReferralsResponse | null>(null)
   const [copied, setCopied] = useState(false)
+  const [botToken, setBotToken] = useState('')
+  const [verifying, setVerifying] = useState(false)
 
-  const load = () => {
+  const load = useCallback(() => {
     myCompanies()
       .then(setCompanies)
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
-  }
+  }, [])
 
-  useEffect(load, [])
+  useEffect(load, [load])
+
+  const verify = async (companyID: number) => {
+    setError('')
+    setVerifying(true)
+    try {
+      await verifyCompany(companyID, botToken.trim())
+      setBotToken('')
+      load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setVerifying(false)
+    }
+  }
 
   useEffect(() => {
     if (companies?.[0]) {
@@ -109,6 +125,34 @@ export default function CompanyScreen() {
           <Link className="btn" to="/company/vacancies">
             Мои вакансии
           </Link>
+
+          {!current.verified && (
+            <div className="form-section">
+              <p className="section-label">Верификация в MAX</p>
+              <div className="card gap-sm">
+                <span className="muted" style={{ fontSize: 12 }}>
+                  Вставьте токен бота вашей компании — получите бейдж доверия для кандидатов
+                </span>
+                <div className="field">
+                  <label>Токен бота (business.max.ru → Чат-боты → Настройки)</label>
+                  <input
+                    className="input"
+                    type="password"
+                    placeholder="Токен бота"
+                    value={botToken}
+                    onChange={(e) => setBotToken(e.target.value)}
+                  />
+                </div>
+                <button
+                  className="btn"
+                  onClick={() => verify(current.id)}
+                  disabled={verifying || !botToken.trim()}
+                >
+                  {verifying ? 'Проверяем…' : 'Верифицировать'}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="form-section">
             <p className="section-label">Пригласить HR</p>

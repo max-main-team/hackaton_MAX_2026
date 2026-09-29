@@ -11,10 +11,10 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - name: Run SQL on prod DB
-        env:
-          SQL: ${{ inputs.sql }}
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/dkey && chmod 600 /tmp/dkey
-          printf '%s' "$SQL" | ssh -o StrictHostKeyChecking=accept-new ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "docker exec -i max-miniapp-postgres-prod sh -c 'psql -U \$POSTGRES_USER -d \$POSTGRES_DB'"
+      - name: Execute SQL
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: docker exec max-miniapp-postgres-prod psql -U postgres -d maxapp -c "${{ inputs.sql }}"
