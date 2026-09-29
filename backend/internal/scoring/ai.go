@@ -23,7 +23,7 @@ func NewAIClient(apiKey, baseURL, model string) *AIClient {
 		apiKey:  apiKey,
 		baseURL: strings.TrimRight(baseURL, "/"),
 		model:   model,
-		client:  &http.Client{Timeout: 180 * time.Second},
+		client:  &http.Client{Timeout: 300 * time.Second},
 	}
 }
 

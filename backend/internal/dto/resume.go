@@ -29,6 +29,7 @@ type Resume struct {
 	UserID          int64     `json:"user_id"`
 	Source          string    `json:"source" enums:"manual,file_parse"`
 	SourceText      string    `json:"source_text"`
+	ParseStatus     string    `json:"parse_status" enums:",processing,done,failed"`
 	IsActive        bool      `json:"is_active"`
 	LastConfirmedAt time.Time `json:"last_confirmed_at"`
 	CreatedAt       time.Time `json:"created_at"`
@@ -102,6 +103,7 @@ func FromResume(r repository.Resume) Resume {
 		UserID:           r.UserID,
 		Source:           r.Source,
 		SourceText:       r.SourceText,
+		ParseStatus:      r.ParseStatus,
 		IsActive:         r.IsActive,
 		LastConfirmedAt:  r.LastConfirmedAt,
 		CreatedAt:        r.CreatedAt,

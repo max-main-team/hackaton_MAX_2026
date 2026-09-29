@@ -40,9 +40,17 @@ export default function ResumeScreen() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
   const [stage, setStage] = useState<'idle' | 'extracting' | 'parsing'>('idle')
+  const [elapsed, setElapsed] = useState(0)
   const [confirmed, setConfirmed] = useState(false)
   const [experienceDraft, setExperienceDraft] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (stage !== 'parsing' && stage !== 'extracting') return
+    setElapsed(0)
+    const timer = setInterval(() => setElapsed(s => s + 1), 1000)
+    return () => clearInterval(timer)
+  }, [stage])
 
   useEffect(() => {
     getResume()
@@ -136,27 +144,38 @@ export default function ResumeScreen() {
       const text = await extractPdfText(file)
 
       setStage('parsing')
-      const result = await parseResume(text, file.name)
+      await parseResume(text, file.name)
 
-      const r = result.resume
-      setForm({
-        title: r.title,
-        skills: r.skills,
-        experience_months: r.experience_months,
-        about: r.about,
-        education: r.education,
-        links: [],
-        city: r.city,
-        work_format: r.work_format,
-        employment_type: r.employment_type,
-        salary_min: r.salary_min,
-        salary_max: r.salary_max,
-      })
-      setLinks(parseLinks(r.links))
-      setNotFound(false)
-      setSaved(false)
-      setExperienceDraft(null)
-      if (result.ai_comment) setError('')
+      // AI работает в фоне — поллим статус до 6 минут
+      for (let i = 0; i < 90; i++) {
+        await new Promise(r => setTimeout(r, 4000))
+        const r = await getResume()
+        if (r.parse_status === 'failed') {
+          setError('Не удалось распознать PDF — заполните резюме вручную')
+          return
+        }
+        if (r.parse_status === 'done') {
+          setForm({
+            title: r.title,
+            skills: r.skills,
+            experience_months: r.experience_months,
+            about: r.about,
+            education: r.education,
+            links: [],
+            city: r.city,
+            work_format: r.work_format,
+            employment_type: r.employment_type,
+            salary_min: r.salary_min,
+            salary_max: r.salary_max,
+          })
+          setLinks(parseLinks(r.links))
+          setNotFound(false)
+          setSaved(false)
+          setExperienceDraft(null)
+          return
+        }
+      }
+      setError('Обработка заняла слишком много времени — попробуйте ещё раз позже')
     } catch (e) {
       setError('Не удалось обработать PDF — заполните резюме вручную или попробуйте другой файл')
     } finally {
@@ -196,8 +215,16 @@ export default function ResumeScreen() {
           disabled={stage !== 'idle'}
           style={{ fontSize: 12, color: 'var(--muted)' }}
         />
-        {stage === 'extracting' && <p className="muted" style={{ margin: 0 }}>Извлекаем текст из PDF…</p>}
-        {stage === 'parsing' && <p className="muted" style={{ margin: 0 }}>AI распознаёт резюме… Это займёт до минуты</p>}
+        {stage === 'extracting' && (
+          <p className="muted" style={{ margin: 0 }}>
+            Извлекаем текст из PDF… {elapsed} сек
+          </p>
+        )}
+        {stage === 'parsing' && (
+          <p className="muted" style={{ margin: 0 }}>
+            AI распознаёт резюме… {elapsed} сек. Большое резюме занимает до 2–3 минут — не закрывайте экран
+          </p>
+        )}
       </div>
 
       <div className="form-section">

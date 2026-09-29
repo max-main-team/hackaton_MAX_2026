@@ -44,3 +44,7 @@ type ParseResumeResponse struct {
 	Resume    Resume `json:"resume"`
 	AIComment string `json:"ai_comment" example:"Извлекли должность, навыки, опыт; зарплату не нашли"`
 }
+
+type ParseStartResponse struct {
+	Status string `json:"status" enums:"processing"`
+}

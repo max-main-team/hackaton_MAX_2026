@@ -1,0 +1,1 @@
+ALTER TABLE resumes ADD COLUMN parse_status TEXT NOT NULL DEFAULT '';

@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -203,65 +205,80 @@ func (h *ResumeHandler) Parse(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	draft, extractErr := h.ai.ExtractResume(ctx, text)
-	notes := draft.Notes
-	if extractErr != nil {
-		h.log.Error("ai extract resume failed", slog.Any("err", err))
-		notes = "Не удалось автоматически распознать текст — заполните поля вручную."
-	}
-
 	existing, err := h.resumes.GetByUserID(ctx, userID)
 	switch {
 	case errors.Is(err, repository.ErrResumeNotFound):
-		existing = repository.Resume{IsActive: false}
+		existing = repository.Resume{IsActive: false, Source: "file_parse"}
 	case err != nil:
 		h.log.Error("get resume failed", slog.Any("err", err))
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
 	}
 
-	if extractErr != nil || (strings.TrimSpace(draft.Title) == "" && strings.TrimSpace(draft.Skills) == "") {
-		// Не затираем резюме пользователя пустым черновиком.
-		if existing.ID != 0 {
-			return c.JSON(http.StatusOK, dto.ParseResumeResponse{
-				Resume:    dto.FromResume(existing),
-				AIComment: notes,
-			})
-		}
-		return c.JSON(http.StatusOK, dto.ParseResumeResponse{
-			Resume:    dto.FromResume(repository.Resume{IsActive: false}),
-			AIComment: notes,
-		})
-	}
-
-	resumeInput := repository.Resume{
-		UserID:           userID,
-		Title:            draft.Title,
-		Skills:           draft.Skills,
-		ExperienceMonths: draft.ExperienceMonths,
-		About:            draft.About,
-		Education:        draft.Education,
-		Links:            "[]",
-		City:             draft.City,
-		WorkFormat:       draft.WorkFormat,
-		EmploymentType:   draft.EmploymentType,
-		SalaryMin:        draft.SalaryMin,
-		SalaryMax:        draft.SalaryMax,
-		Source:           "file_parse",
-		SourceText:       text,
-		IsActive:         existing.IsActive,
-	}
+	draft := existing
+	draft.Source = "file_parse"
+	draft.SourceText = text
+	draft.ParseStatus = "processing"
 	if existing.ID == 0 {
-		resumeInput.IsActive = false
+		draft.IsActive = false
 	}
 
-	saved, err := h.resumes.UpsertResume(ctx, resumeInput)
+	saved, err := h.resumes.UpsertResume(ctx, draft)
 	if err != nil {
 		h.log.Error("upsert parsed resume failed", slog.Any("err", err))
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
 	}
 
-	return c.JSON(http.StatusOK, dto.ParseResumeResponse{
-		Resume:    dto.FromResume(saved),
-		AIComment: notes,
-	})
+	// AI-распознавание уходит в фон: вебвью MAX обрывает запросы длиннее
+	// ~60 секунд (URLSession), ждать внутри HTTP-запроса нельзя.
+	go h.processParsedResume(userID, text, saved, existing)
+
+	return c.JSON(http.StatusAccepted, dto.ParseStartResponse{Status: "processing"})
+}
+
+// processParsedResume распознаёт текст резюме через AI и обновляет
+// черновик. Статус: processing → done | failed (виден фронту).
+func (h *ResumeHandler) processParsedResume(userID int64, text string, saved repository.Resume, existing repository.Resume) {
+	defer func() {
+		if r := recover(); r != nil {
+			h.log.Error("parse worker panic", slog.Any("panic", r))
+			_ = h.resumes.SetParseStatus(context.Background(), userID, "failed")
+		}
+	}()
+
+	bgCtx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
+	defer cancel()
+
+	aiDraft, extractErr := h.ai.ExtractResume(bgCtx, text)
+	if extractErr != nil {
+		h.log.Error("ai extract resume failed", slog.Any("err", extractErr))
+		_ = h.resumes.SetParseStatus(bgCtx, userID, "failed")
+		return
+	}
+	if strings.TrimSpace(aiDraft.Title) == "" && strings.TrimSpace(aiDraft.Skills) == "" {
+		h.log.Warn("ai extract returned empty draft")
+		_ = h.resumes.SetParseStatus(bgCtx, userID, "failed")
+		return
+	}
+
+	if _, err := h.resumes.UpsertResume(bgCtx, repository.Resume{
+		UserID:           userID,
+		Title:            aiDraft.Title,
+		Skills:           aiDraft.Skills,
+		ExperienceMonths: aiDraft.ExperienceMonths,
+		About:            aiDraft.About,
+		Education:        aiDraft.Education,
+		Links:            "[]",
+		City:             aiDraft.City,
+		WorkFormat:       aiDraft.WorkFormat,
+		EmploymentType:   aiDraft.EmploymentType,
+		SalaryMin:        aiDraft.SalaryMin,
+		SalaryMax:        aiDraft.SalaryMax,
+		Source:           "file_parse",
+		SourceText:       text,
+		ParseStatus:      "done",
+		IsActive:         saved.IsActive,
+	}); err != nil {
+		h.log.Error("upsert parsed resume failed", slog.Any("err", err))
+		_ = h.resumes.SetParseStatus(bgCtx, userID, "failed")
+	}
 }

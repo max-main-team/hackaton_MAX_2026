@@ -29,6 +29,7 @@ type Resume struct {
 	SalaryMax        *int      `json:"salary_max"`
 	Source           string    `json:"source"`
 	SourceText       string    `json:"source_text"`
+	ParseStatus      string    `json:"parse_status"`
 	IsActive         bool      `json:"is_active"`
 	LastConfirmedAt  time.Time `json:"last_confirmed_at"`
 	CreatedAt        time.Time `json:"created_at"`
@@ -54,7 +55,7 @@ func NewResumeRepo(pool *pgxpool.Pool) *ResumeRepo {
 const resumeColumns = `
 	id, user_id, title, skills, experience_months, about, education, links,
 	city, work_format, employment_type, salary_min, salary_max,
-	source, source_text, is_active, last_confirmed_at, created_at, updated_at
+	source, source_text, parse_status, is_active, last_confirmed_at, created_at, updated_at
 `
 
 func scanResume(row pgx.Row) (Resume, error) {
@@ -64,7 +65,7 @@ func scanResume(row pgx.Row) (Resume, error) {
 		&r.ID, &r.UserID, &r.Title, &r.Skills, &r.ExperienceMonths,
 		&r.About, &r.Education, &links, &r.City, &r.WorkFormat,
 		&r.EmploymentType, &r.SalaryMin, &r.SalaryMax,
-		&r.Source, &r.SourceText, &r.IsActive,
+		&r.Source, &r.SourceText, &r.ParseStatus, &r.IsActive,
 		&r.LastConfirmedAt, &r.CreatedAt, &r.UpdatedAt,
 	)
 	if err != nil {
@@ -86,8 +87,8 @@ func (r *ResumeRepo) UpsertResume(ctx context.Context, res Resume) (Resume, erro
 	row := tx.QueryRow(ctx, `
 		INSERT INTO resumes (user_id, title, skills, experience_months, about, education,
 		                     links, city, work_format, employment_type, salary_min, salary_max,
-		                     source, source_text, is_active)
-		VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13, $14, $15)
+		                     source, source_text, parse_status, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 		ON CONFLICT (user_id) DO UPDATE SET
 			title             = EXCLUDED.title,
 			skills            = EXCLUDED.skills,
@@ -102,12 +103,13 @@ func (r *ResumeRepo) UpsertResume(ctx context.Context, res Resume) (Resume, erro
 			salary_max        = EXCLUDED.salary_max,
 			source            = EXCLUDED.source,
 			source_text       = EXCLUDED.source_text,
+			parse_status      = EXCLUDED.parse_status,
 			is_active         = EXCLUDED.is_active,
 			updated_at        = now()
 		RETURNING `+resumeColumns,
 		res.UserID, res.Title, res.Skills, res.ExperienceMonths, res.About,
 		res.Education, res.Links, res.City, res.WorkFormat, res.EmploymentType,
-		res.SalaryMin, res.SalaryMax, res.Source, res.SourceText, res.IsActive,
+		res.SalaryMin, res.SalaryMax, res.Source, res.SourceText, res.ParseStatus, res.IsActive,
 	)
 	saved, err := scanResume(row)
 	if err != nil {
@@ -210,4 +212,15 @@ func (r *ResumeRepo) ListVersions(ctx context.Context, userID int64) ([]ResumeVe
 		out = append(out, v)
 	}
 	return out, rows.Err()
+}
+
+// SetParseStatus обновляет статус AI-парсинга резюме.
+func (r *ResumeRepo) SetParseStatus(ctx context.Context, userID int64, status string) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE resumes SET parse_status = $2, updated_at = now() WHERE user_id = $1
+	`, userID, status)
+	if err != nil {
+		return fmt.Errorf("set parse status: %w", err)
+	}
+	return nil
 }
