@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { candidateAction, candidates } from '../../api/matching'
 import { companyVacancies, myCompanies } from '../../api/company'
@@ -8,7 +8,6 @@ import { TabBar } from '../../components/TabBar'
 import { Icon } from '../../components/Icon'
 import { experienceLabel, shortCity } from '../../components/format'
 import { getWebApp } from '../../lib/max'
-
 export default function Feed() {
   const { id } = useParams()
   const vacancyId = Number(id)
@@ -17,6 +16,8 @@ export default function Feed() {
   const [vacancy, setVacancy] = useState<Vacancy | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<{ startX: number; dx: number } | null>(null)
 
   const load = useCallback(() => {
     candidates(vacancyId, 'feed')
@@ -49,6 +50,29 @@ export default function Feed() {
       setIndex((i) => i + 1)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
+    }
+  }
+
+  const onCardPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    dragRef.current = { startX: e.clientX, dx: 0 }
+    cardRef.current?.setPointerCapture(e.pointerId)
+  }
+
+  const onCardPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    if (!drag || !cardRef.current) return
+    drag.dx = e.clientX - drag.startX
+    cardRef.current.style.transform = `translateX(${drag.dx}px) rotate(${drag.dx / 24}deg)`
+  }
+
+  const onCardPointerUp = () => {
+    const drag = dragRef.current
+    dragRef.current = null
+    if (!cardRef.current) return
+    cardRef.current.style.transform = ''
+    if (drag && Math.abs(drag.dx) > 80) {
+      act(drag.dx > 0 ? 'invite' : 'skip')
     }
   }
 
@@ -100,7 +124,15 @@ export default function Feed() {
         )}
 
         {current && (
-          <div className="stack-card">
+          <div
+            className="stack-card"
+            ref={cardRef}
+            onPointerDown={onCardPointerDown}
+            onPointerMove={onCardPointerMove}
+            onPointerUp={onCardPointerUp}
+            onPointerCancel={onCardPointerUp}
+            style={{ touchAction: 'pan-y' }}
+          >
             <div className="photo-area">
               {current.user.photo_url ? (
                 <img src={current.user.photo_url} alt="" />

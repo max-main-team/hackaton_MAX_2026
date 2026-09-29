@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { TabBar } from './TabBar'
 import { Icon, type IconName } from './Icon'
+import { clearSession } from '../lib/session'
 
 interface ScreenProps {
   role?: 'candidate' | 'recruiter'
@@ -11,16 +13,30 @@ interface ScreenProps {
 }
 
 export function Screen({ role, title, icon, sub, children }: ScreenProps) {
+  const navigate = useNavigate()
+
+  const logout = () => {
+    clearSession()
+    navigate('/', { replace: true })
+  }
+
   return (
     <main className="screen">
-      {(title || icon) && (
+      {(title || icon || role) && (
         <header className="screen-header">
           {title ? <h1>{title}</h1> : <span />}
-          {icon && (
-            <span className="header-icon">
-              <Icon name={icon} />
-            </span>
-          )}
+          <div className="row" style={{ flexWrap: 'nowrap', gap: 12 }}>
+            {icon && (
+              <span className="header-icon">
+                <Icon name={icon} />
+              </span>
+            )}
+            {role && (
+              <button className="header-icon" title="Выйти" onClick={logout}>
+                <Icon name="logout" />
+              </button>
+            )}
+          </div>
         </header>
       )}
       {sub && <p className="screen-sub">{sub}</p>}

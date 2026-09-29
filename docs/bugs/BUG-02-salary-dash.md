@@ -40,3 +40,10 @@ space-between` родительской строки — визуальная ц
 (`margin-left: auto`, `gap: 2px`), тире сделать `en dash` c
 неразрывными пробелами (`\u2013`, `white-space: nowrap`); плейсхолдеры
 `от`/`до` убрать или заменить на единый `—`.
+
+## Фикс
+
+- Класс `.range`: компактная группа `margin-left: auto`, инпуты 74px,
+  en dash и `₽` прижаты к числам, `white-space: nowrap`.
+- Файлы: `index.css`, `recruiter/vacancy-new.tsx`, `candidate/resume.tsx`.
+- Проверено вживую на экране вакансии.

@@ -40,6 +40,7 @@ export default function ResumeScreen() {
   const [error, setError] = useState('')
   const [stage, setStage] = useState<'idle' | 'extracting' | 'parsing'>('idle')
   const [confirmed, setConfirmed] = useState(false)
+  const [experienceDraft, setExperienceDraft] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -58,6 +59,7 @@ export default function ResumeScreen() {
           salary_min: r.salary_min,
           salary_max: r.salary_max,
         })
+        setExperienceDraft(null)
         setLinks(parseLinks(r.links))
         setNotFound(false)
       })
@@ -71,6 +73,11 @@ export default function ResumeScreen() {
   const setField = <K extends keyof ResumeInput>(key: K, value: ResumeInput[K]) => {
     setForm((f) => ({ ...f, [key]: value }))
     setSaved(false)
+  }
+
+  const setExperience = (raw: string) => {
+    setExperienceDraft(raw)
+    setField('experience_months', raw === '' ? 0 : Number(raw))
   }
 
   const validate = (): string | null => {
@@ -136,6 +143,7 @@ export default function ResumeScreen() {
       setLinks(parseLinks(r.links))
       setNotFound(false)
       setSaved(false)
+      setExperienceDraft(null)
       if (result.ai_comment) setError('')
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -202,9 +210,10 @@ export default function ResumeScreen() {
             <input
               className="input plain"
               type="number"
+              placeholder="0"
               style={{ maxWidth: 90 }}
-              value={form.experience_months}
-              onChange={(e) => setField('experience_months', Number(e.target.value))}
+              value={experienceDraft ?? (form.experience_months === 0 ? '' : String(form.experience_months))}
+              onChange={(e) => setExperience(e.target.value)}
             />
           </div>
           <hr className="divider" />
@@ -252,26 +261,24 @@ export default function ResumeScreen() {
           <hr className="divider" />
           <div className="fieldset-row">
             <span className="flabel">Оклад</span>
-            <div className="row" style={{ flexWrap: 'nowrap', gap: 4 }}>
+            <span className="range">
               <input
                 className="input plain"
                 type="number"
-                style={{ maxWidth: 90 }}
                 placeholder="от"
                 value={form.salary_min ?? ''}
                 onChange={(e) => setField('salary_min', e.target.value === '' ? null : Number(e.target.value))}
               />
-              <span className="muted">–</span>
+              <span className="range-dash">–</span>
               <input
                 className="input plain"
                 type="number"
-                style={{ maxWidth: 90 }}
                 placeholder="до"
                 value={form.salary_max ?? ''}
                 onChange={(e) => setField('salary_max', e.target.value === '' ? null : Number(e.target.value))}
               />
               <span className="fvalue">₽</span>
-            </div>
+            </span>
           </div>
         </div>
       </div>

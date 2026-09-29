@@ -44,3 +44,13 @@ script.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU'
    на build-этапе фронта.
 3. До появления ключа показывать на экране карты понятное состояние
    «Карта временно недоступна» вместо пустого контейнера.
+
+## Фикс
+
+- Получен ключ JavaScript API (кабинет yandex.ru/maps-api), залит в
+  GitHub Secret `VITE_YANDEX_MAPS_API_KEY`; проброшен через
+  `ARG` в `frontend/Dockerfile` и `build-args` в ci-cd.yml.
+- Карта мигрирована с JS API 2.1 на 3.0 (`ymaps3`, тёмная тема,
+  HTML-маркеры, клик → карточка вакансии); координаты в 3.0 — [lng, lat].
+- Без ключа в бандле показывается понятная ошибка вместо пустого контейнера.
+- Локальная разработка: `frontend/.env.local` (в .gitignore).

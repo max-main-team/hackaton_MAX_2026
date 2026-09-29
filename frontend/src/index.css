@@ -84,6 +84,10 @@ a {
   height: 20px;
   color: var(--muted);
   display: flex;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .screen-header .header-icon svg {
@@ -793,4 +797,50 @@ a {
   text-align: center;
   color: var(--muted);
   font-size: 14px;
+}
+
+.map-marker {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transform: translate(-50%, -100%);
+}
+
+.map-marker::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-soft);
+  border-right: 1px solid var(--accent);
+  border-bottom: 1px solid var(--accent);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.range {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.range .input {
+  width: 74px;
+  text-align: right;
+}
+
+.range-dash {
+  color: var(--muted);
 }

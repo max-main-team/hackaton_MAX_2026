@@ -71,6 +71,7 @@ jobs:
           context: ./frontend
           push: true
           tags: ghcr.io/max-main-team/hackaton_max_2026/frontend:latest
+          build-args: VITE_YANDEX_MAPS_API_KEY=${{ secrets.VITE_YANDEX_MAPS_API_KEY }}
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

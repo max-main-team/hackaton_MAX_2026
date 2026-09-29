@@ -24,6 +24,7 @@ export default function VacancyNew() {
   const navigate = useNavigate()
   const [companyId, setCompanyId] = useState<number | null>(null)
   const [form, setForm] = useState<VacancyInput>(EMPTY_FORM)
+  const [experienceDraft, setExperienceDraft] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -40,7 +41,10 @@ export default function VacancyNew() {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
-  const reset = () => setForm(EMPTY_FORM)
+  const reset = () => {
+    setForm(EMPTY_FORM)
+    setExperienceDraft('')
+  }
 
   const save = async () => {
     setError('')
@@ -126,8 +130,12 @@ export default function VacancyNew() {
                 className="input plain"
                 type="number"
                 style={{ maxWidth: 90 }}
-                value={form.min_experience_months}
-                onChange={(e) => set('min_experience_months', Number(e.target.value))}
+                placeholder="0"
+                value={experienceDraft}
+                onChange={(e) => {
+                  setExperienceDraft(e.target.value)
+                  set('min_experience_months', e.target.value === '' ? 0 : Number(e.target.value))
+                }}
               />
             </div>
             <hr className="divider" />
@@ -175,26 +183,24 @@ export default function VacancyNew() {
             <hr className="divider" />
             <div className="fieldset-row">
               <span className="flabel">Оклад</span>
-              <div className="row" style={{ flexWrap: 'nowrap', gap: 4 }}>
+              <span className="range">
                 <input
                   className="input plain"
                   type="number"
-                  style={{ maxWidth: 90 }}
                   placeholder="от"
                   value={form.salary_min ?? ''}
                   onChange={(e) => set('salary_min', e.target.value === '' ? null : Number(e.target.value))}
                 />
-                <span className="muted">–</span>
+                <span className="range-dash">–</span>
                 <input
                   className="input plain"
                   type="number"
-                  style={{ maxWidth: 90 }}
                   placeholder="до"
                   value={form.salary_max ?? ''}
                   onChange={(e) => set('salary_max', e.target.value === '' ? null : Number(e.target.value))}
                 />
                 <span className="fvalue">₽</span>
-              </div>
+              </span>
             </div>
           </div>
         </div>
