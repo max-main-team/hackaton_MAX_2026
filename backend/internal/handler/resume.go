@@ -276,7 +276,7 @@ func (h *ResumeHandler) processParsedResume(userID int64, text string, saved rep
 		Source:           "file_parse",
 		SourceText:       text,
 		ParseStatus:      "done",
-		IsActive:         saved.IsActive,
+		IsActive:         true, // успешный парсинг = юзер хочет быть виден компаниям
 	}); err != nil {
 		h.log.Error("upsert parsed resume failed", slog.Any("err", err))
 		_ = h.resumes.SetParseStatus(bgCtx, userID, "failed")
