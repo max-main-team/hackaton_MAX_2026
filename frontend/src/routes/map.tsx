@@ -2,52 +2,47 @@ import { useEffect, useRef, useState } from 'react'
 import { mapVacancies } from '../api/map'
 import type { MapVacancy } from '../api/types'
 import { Screen } from '../components/Screen'
-import { formatSalary, shortCity } from '../components/format'
-import { VerifiedBadge } from '../components/Badge'
+import { formatSalary } from '../components/format'
 import { getStoredUser } from '../lib/session'
 
 declare global {
   interface Window {
-    ymaps3?: any
+    ymaps: any
   }
 }
 
 const API_KEY: string = import.meta.env.VITE_YANDEX_MAPS_API_KEY ?? ''
 
-function ensureYmaps3(): Promise<void> {
-  if (window.ymaps3) return Promise.resolve()
+function ensureYmaps(): Promise<void> {
+  if (window.ymaps) {
+    return new Promise((resolve) => window.ymaps.ready(() => resolve()))
+  }
   return new Promise((resolve, reject) => {
     const script = document.createElement('script')
-    script.src = `https://api-maps.yandex.ru/v3/?apikey=${API_KEY}&lang=ru_RU`
+    script.src = `https://api-maps.yandex.ru/2.1/?apikey=${API_KEY}&lang=ru_RU`
     script.onload = () => {
-      const wait = () => {
-        if (window.ymaps3) {
-          window.ymaps3.ready.then(() => resolve()).catch(reject)
-        } else {
-          setTimeout(wait, 200)
-        }
-      }
-      wait()
+      window.ymaps.ready(() => resolve())
     }
     script.onerror = () => reject(new Error('Не удалось загрузить Яндекс.Карты'))
     document.head.appendChild(script)
   })
 }
 
-function boundsOf(items: MapVacancy[]): [[number, number], [number, number]] {
-  const lngs = items.map((v) => v.lng)
-  const lats = items.map((v) => v.lat)
-  return [
-    [Math.min(...lngs), Math.min(...lats)],
-    [Math.max(...lngs), Math.max(...lats)],
-  ]
+function vacancyBalloon(v: MapVacancy) {
+  const body = `${v.company_name}${v.verified ? ' ✓' : ''}<br/>${v.city || ''}`
+  const footer = formatSalary(v.salary_min, v.salary_max)
+  return {
+    balloonContentHeader: v.title,
+    balloonContentBody: body,
+    balloonContentFooter: footer,
+  }
 }
 
 export default function MapScreen() {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null)
+  const placemarkRefs = useRef<any[]>([])
   const [items, setItems] = useState<MapVacancy[] | null>(null)
-  const [selected, setSelected] = useState<MapVacancy | null>(null)
   const [error, setError] = useState('')
   const role = getStoredUser<{ role: string } | null>()?.role
 
@@ -59,42 +54,45 @@ export default function MapScreen() {
 
   useEffect(() => {
     let cancelled = false
-    if (!API_KEY) {
-      setError('Карта временно недоступна: не настроен API-ключ Яндекс.Карт')
-      return
-    }
+    if (!API_KEY) return
     if (!items || !items.length) return
 
-    ensureYmaps3()
+    ensureYmaps()
       .then(() => {
-        if (cancelled || !mapRef.current || !window.ymaps3) return
-        const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapMarker } = window.ymaps3
+        if (cancelled || !mapRef.current || !window.ymaps) return
 
         if (!mapInstance.current) {
-          mapInstance.current = new YMap(mapRef.current, {
-            location: { center: [items[0].lng, items[0].lat], zoom: items.length === 1 ? 13 : 11 },
-            theme: 'dark',
+          mapInstance.current = new window.ymaps.Map(mapRef.current, {
+            center: [items[0].lat, items[0].lng],
+            zoom: items.length === 1 ? 13 : 11,
+            controls: ['zoomControl', 'fullscreenControl'],
           })
-          mapInstance.current.addChild(new YMapDefaultSchemeLayer({}))
-          mapInstance.current.addChild(new YMapDefaultFeaturesLayer({}))
         }
         const map = mapInstance.current
 
+        placemarkRefs.current.forEach((p) => map.geoObjects.remove(p))
+        placemarkRefs.current = []
+
         items.forEach((v) => {
           if (!v.lat || !v.lng) return
-          const el = document.createElement('button')
-          el.className = 'map-marker'
-          el.type = 'button'
-          el.innerHTML = `<span>${v.title}</span>`
-          el.addEventListener('click', (e) => {
-            e.stopPropagation()
-            setSelected(v)
+          const placemark = new window.ymaps.Placemark([v.lat, v.lng], vacancyBalloon(v), {
+            preset: 'islands#blueDotIcon',
+            iconColor: '#5288c1',
           })
-          map.addChild(new YMapMarker({ coordinates: [v.lng, v.lat] }, el))
+          map.geoObjects.add(placemark)
+          placemarkRefs.current.push(placemark)
         })
 
-        if (items.length > 1) {
-          map.update({ location: { bounds: boundsOf(items) } })
+        if (items.length === 1) {
+          map.setCenter([items[0].lat, items[0].lng], 13)
+        } else if (items.length > 1) {
+          map.setBounds(
+            [
+              [Math.min(...items.map((i) => i.lat)), Math.min(...items.map((i) => i.lng))],
+              [Math.max(...items.map((i) => i.lat)), Math.max(...items.map((i) => i.lng))],
+            ],
+            { checkZoomRange: true },
+          )
         }
       })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
@@ -106,7 +104,9 @@ export default function MapScreen() {
 
   return (
     <Screen role={role === 'recruiter' ? 'recruiter' : 'candidate'} title="Карта вакансий" icon="map">
-      {error && <p className="error-text">{error}</p>}
+      {(!API_KEY || error) && (
+        <p className="error-text">{!API_KEY ? 'Карта временно недоступна: не настроен API-ключ Яндекс.Карт' : error}</p>
+      )}
       {items === null && !error && <p className="muted">Загрузка…</p>}
       {items !== null && items.length === 0 && (
         <div className="center-note">
@@ -116,29 +116,8 @@ export default function MapScreen() {
 
       <div
         ref={mapRef}
-        style={{ height: '58vh', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--stroke)' }}
+        style={{ height: '62vh', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--stroke)' }}
       />
-
-      {selected && (
-        <div className="card gap-sm" style={{ padding: 14 }}>
-          <div className="row between" style={{ flexWrap: 'nowrap' }}>
-            <div className="row" style={{ flexWrap: 'nowrap', gap: 4, minWidth: 0 }}>
-              <strong style={{ fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis' }}>{selected.company_name}</strong>
-              <VerifiedBadge verified={selected.verified} />
-            </div>
-            <button className="link-btn" onClick={() => setSelected(null)}>
-              ✕
-            </button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 16, fontWeight: 700 }}>{selected.title}</span>
-            <span className="muted" style={{ fontSize: 12 }}>
-              {selected.city ? `${shortCity(selected.city)} · ` : ''}
-              {formatSalary(selected.salary_min, selected.salary_max)}
-            </span>
-          </div>
-        </div>
-      )}
 
       {items !== null && items.length > 0 && (
         <p className="muted" style={{ textAlign: 'center', fontSize: 12, margin: 0 }}>
