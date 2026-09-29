@@ -63,6 +63,7 @@ func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 
 	authH := handler.NewAuthHandler(users, s.cfg, s.log)
 	meH := handler.NewMeHandler(users, companies, s.log)
+	debugH := handler.NewDebugHandler(s.log)
 	resumeH := handler.NewResumeHandler(resumes, aiClient, s.log)
 	companyH := handler.NewCompanyHandler(companies, vacancies, s.log)
 	vacancyH := handler.NewVacancyHandler(companies, vacancies, s.log)
@@ -92,6 +93,7 @@ func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 	private.GET("/vacancies/map", vacancyH.Map)
 	private.GET("/my/referrals", meH.Referrals)
 	private.GET("/my/company-referrals", meH.CompanyReferrals)
+	private.POST("/debug/log", debugH.Log)
 	private.GET("/companies/:id/vacancies", companyH.VacancyList)
 	private.POST("/companies/:id/vacancies", companyH.VacancyCreate)
 	private.PATCH("/vacancies/:id", vacancyH.Update)

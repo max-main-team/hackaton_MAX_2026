@@ -144,7 +144,17 @@ export default function ResumeScreen() {
       const text = await extractPdfText(file)
 
       setStage('parsing')
-      await parseResume(text, file.name)
+      try {
+        await parseResume(text, file.name)
+      } catch (e) {
+        void fetch('/api/v1/debug/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ where: 'resume-parse', detail: e instanceof Error ? e.message : String(e) }),
+        }).catch(() => {})
+        setError('Не удалось распознать PDF — заполните резюме вручную')
+        return
+      }
 
       // AI работает в фоне — поллим статус до 6 минут
       for (let i = 0; i < 90; i++) {
@@ -177,6 +187,12 @@ export default function ResumeScreen() {
       }
       setError('Обработка заняла слишком много времени — попробуйте ещё раз позже')
     } catch (e) {
+      const detail = e instanceof Error ? `${e.name}: ${e.message}` : String(e)
+      void fetch('/api/v1/debug/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ where: 'resume-extract', detail }),
+      }).catch(() => {})
       setError('Не удалось обработать PDF — заполните резюме вручную или попробуйте другой файл')
     } finally {
       setStage('idle')
