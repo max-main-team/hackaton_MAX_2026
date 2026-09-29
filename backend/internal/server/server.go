@@ -86,6 +86,7 @@ func (s *Server) setupRoutes(pool *pgxpool.Pool) {
 	private.GET("/my/resume", resumeH.Get)
 	private.PUT("/my/resume", resumeH.Put)
 	private.POST("/my/resume/parse", resumeH.Parse)
+	private.POST("/my/resume/parse-file", resumeH.ParseFile)
 	private.POST("/my/resume/confirm-activity", resumeH.ConfirmActivity)
 	private.POST("/companies", companyH.Create)
 	private.GET("/my/companies", companyH.ListMine)

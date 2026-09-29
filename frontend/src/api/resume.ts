@@ -22,3 +22,12 @@ export function parseResume(text: string, fileName: string): Promise<{ status: s
     body: JSON.stringify({ text, file_name: fileName }),
   })
 }
+
+export function parseFile(file: File): Promise<{ status: string }> {
+  const body = new FormData()
+  body.append('file', file)
+  return request<{ status: string }>('/my/resume/parse-file', {
+    method: 'POST',
+    body,
+  })
+}

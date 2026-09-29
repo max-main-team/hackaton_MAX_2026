@@ -56,7 +56,7 @@ export interface Resume extends ResumeInput {
   user_id: number
   source: string
   source_text: string
-  parse_status: '' | 'processing' | 'done' | 'failed'
+  parse_status?: '' | 'processing' | 'done' | 'failed'
   is_active: boolean
   last_confirmed_at: string
   created_at: string

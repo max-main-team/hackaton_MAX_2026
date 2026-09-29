@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { confirmActivity, getResume, parseResume, saveResume } from '../../api/resume'
+import { confirmActivity, getResume, parseFile, parseResume, saveResume } from '../../api/resume'
 import type { Resume, ResumeInput, ResumeLink } from '../../api/types'
 import { EMPLOYMENT_TYPES, WORK_FORMATS, WORK_FORMAT_LABELS } from '../../api/types'
 import { Screen } from '../../components/Screen'
 import { Icon } from '../../components/Icon'
+import { ApiError } from '../../api/client'
 import { digits } from '../../components/format'
 import { authHeaders } from '../../lib/session'
 
@@ -134,71 +135,88 @@ export default function ResumeScreen() {
       setError('Файл больше 10 МБ')
       return
     }
-    const head = new Uint8Array(await file.slice(0, 5).arrayBuffer())
-    if (String.fromCharCode(...head) !== '%PDF-') {
-      setError('Это не PDF-файл — проверьте расширение')
-      return
-    }
+
+    setStage('extracting')
+
+    // 1) сервер-сайд: файл уходит на бекенд, текст извлекается там
+    let serverAccepted = false
     try {
-      setStage('extracting')
-      const { extractPdfText } = await import('../../lib/pdf')
-      const text = await extractPdfText(file)
-
-      setStage('parsing')
-      try {
-        await parseResume(text, file.name)
-      } catch (e) {
-        void fetch('/api/v1/debug/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authHeaders() },
-          body: JSON.stringify({ where: 'resume-parse', detail: e instanceof Error ? e.message : String(e) }),
-        }).catch(() => {})
-        setError('Не удалось распознать PDF — заполните резюме вручную')
-        return
-      }
-
-      // AI работает в фоне — поллим статус до 6 минут
-      for (let i = 0; i < 90; i++) {
-        await new Promise(r => setTimeout(r, 4000))
-        const r = await getResume()
-        if (r.parse_status === 'failed') {
-          setError('Не удалось распознать PDF — заполните резюме вручную')
-          return
-        }
-        if (r.parse_status === 'done') {
-          setForm({
-            title: r.title,
-            skills: r.skills,
-            experience_months: r.experience_months,
-            about: r.about,
-            education: r.education,
-            links: [],
-            city: r.city,
-            work_format: r.work_format,
-            employment_type: r.employment_type,
-            salary_min: r.salary_min,
-            salary_max: r.salary_max,
-          })
-          setLinks(parseLinks(r.links))
-          setNotFound(false)
-          setSaved(false)
-          setExperienceDraft(null)
-          return
-        }
-      }
-      setError('Обработка заняла слишком много времени — попробуйте ещё раз позже')
+      await parseFile(file)
+      serverAccepted = true
     } catch (e) {
-      const detail = e instanceof Error ? `${e.name}: ${e.message}` : String(e)
+      const detail = e instanceof Error ? e.message : String(e)
       void fetch('/api/v1/debug/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ where: 'resume-extract', detail }),
+        body: JSON.stringify({ where: 'resume-parse-file', detail }),
       }).catch(() => {})
-      setError('Не удалось обработать PDF — заполните резюме вручную или попробуйте другой файл')
-    } finally {
-      setStage('idle')
-      if (fileRef.current) fileRef.current.value = ''
+      if (e instanceof ApiError && e.status === 400 && /larger than 10/i.test(e.message)) {
+        setError('Файл больше 10 МБ')
+        return
+      }
+      // остальное (нет текстового слоя и т.п.) → пробуем в браузере
     }
+
+    // 2) фолбэк: клиентский pdfjs (legacy)
+    if (!serverAccepted) {
+      let text = ''
+      try {
+        const { extractPdfText } = await import('../../lib/pdf')
+        text = await extractPdfText(file)
+      } catch (e) {
+        const detail = e instanceof Error ? `${e.name}: ${e.message}` : String(e)
+        void fetch('/api/v1/debug/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ where: 'resume-extract', detail }),
+        }).catch(() => {})
+        setError('Не удалось обработать PDF — заполните резюме вручную или попробуйте другой файл')
+        return
+      }
+      try {
+        await parseResume(text, file.name)
+      } catch (e) {
+        const detail = e instanceof Error ? e.message : String(e)
+        void fetch('/api/v1/debug/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ where: 'resume-parse', detail }),
+        }).catch(() => {})
+        setError('Не удалось обработать PDF — заполните резюме вручную или попробуйте другой файл')
+        return
+      }
+    }
+
+    // 3) AI в фоне — поллинг статуса до 6 минут
+    for (let i = 0; i < 90; i++) {
+      await new Promise(r => setTimeout(r, 4000))
+      const r = await getResume()
+      if (r.parse_status === 'failed') {
+        setError('Не удалось распознать PDF — заполните резюме вручную')
+        return
+      }
+      if (r.parse_status === 'done') {
+        setForm({
+          title: r.title,
+          skills: r.skills,
+          experience_months: r.experience_months,
+          about: r.about,
+          education: r.education,
+          links: [],
+          city: r.city,
+          work_format: r.work_format,
+          employment_type: r.employment_type,
+          salary_min: r.salary_min,
+          salary_max: r.salary_max,
+        })
+        setLinks(parseLinks(r.links))
+        setNotFound(false)
+        setSaved(false)
+        setExperienceDraft(null)
+        return
+      }
+    }
+    setError('Обработка заняла слишком много времени — резюме заполнится чуть позже, обновите экран')
   }
 
   if (loading) {

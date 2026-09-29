@@ -3,12 +3,16 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	ledongthucpdf "github.com/ledongthuc/pdf"
 
 	"max-miniapp/backend/internal/dto"
 	"max-miniapp/backend/internal/middleware"
@@ -281,4 +285,125 @@ func (h *ResumeHandler) processParsedResume(userID int64, text string, saved rep
 		h.log.Error("upsert parsed resume failed", slog.Any("err", err))
 		_ = h.resumes.SetParseStatus(bgCtx, userID, "failed")
 	}
+}
+
+// extractPDFText сервер-сайд извлечение текста из PDF (Go, без браузера).
+func extractPDFText(path string) (string, error) {
+	_, r, err := ledongthucpdf.Open(path)
+	if err != nil {
+		return "", fmt.Errorf("open pdf: %w", err)
+	}
+	var b strings.Builder
+	total := 0
+	for i := 1; i <= r.NumPage(); i++ {
+		page := r.Page(i)
+		if page.V.IsNull() {
+			continue
+		}
+		text, err := page.GetPlainText(nil)
+		if err != nil {
+			continue
+		}
+		text = strings.Join(strings.Fields(text), " ")
+		b.WriteString(text)
+		b.WriteString("\n\n")
+		total += len(text)
+		if total > parseTextMaxLen {
+			break
+		}
+	}
+	return b.String(), nil
+}
+
+// ParseFile — загрузка PDF-файла и фоновый AI-парсинг (текст извлекается
+// на сервере, вебвью не участвует).
+//
+//	@Summary     Загрузить PDF-резюме
+//	@Tags        resume
+//	@Accept      multipart/form-data
+//	@Produce     json
+//	@Param       file formData file true "PDF-файл резюме (до 10 МБ)"
+//	@Success     202 {object} dto.ParseStartResponse
+//	@Failure     400 {object} dto.ErrorResponse
+//	@Failure     401 {object} dto.ErrorResponse
+//	@Failure     422 {object} dto.ErrorResponse
+//	@Security    BearerAuth
+//	@Router      /api/v1/my/resume/parse-file [post]
+func (h *ResumeHandler) ParseFile(c echo.Context) error {
+	userID, err := middleware.UserIDFromContext(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "file is required")
+	}
+	if fileHeader.Size > 10*1024*1024 {
+		return echo.NewHTTPError(http.StatusBadRequest, "file is larger than 10 MB")
+	}
+
+	src, err := fileHeader.Open()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot read file")
+	}
+	defer src.Close()
+
+	tmp, err := os.CreateTemp("", "resume-*.pdf")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+	if _, err := io.Copy(tmp, src); err != nil {
+		tmp.Close()
+		return echo.NewHTTPError(http.StatusBadRequest, "cannot read file")
+	}
+	tmp.Close()
+
+	head := make([]byte, 5)
+	if f, err := os.Open(tmpPath); err == nil {
+		_, _ = f.Read(head)
+		f.Close()
+		if string(head) != "%PDF-" {
+			return echo.NewHTTPError(http.StatusUnprocessableEntity, "not a PDF file")
+		}
+	}
+
+	text, extractErr := extractPDFText(tmpPath)
+	text = strings.TrimSpace(text)
+	if extractErr != nil || len(text) < parseTextMinLen {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, "pdf has no text layer — fill the resume manually")
+	}
+	if len(text) > parseTextMaxLen {
+		text = text[:parseTextMaxLen]
+	}
+
+	ctx := c.Request().Context()
+	existing, err := h.resumes.GetByUserID(ctx, userID)
+	switch {
+	case errors.Is(err, repository.ErrResumeNotFound):
+		existing = repository.Resume{IsActive: false, Source: "file_parse"}
+	case err != nil:
+		h.log.Error("get resume failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+
+	draft := existing
+	draft.Source = "file_parse"
+	draft.SourceText = text
+	draft.ParseStatus = "processing"
+	if existing.ID == 0 {
+		draft.IsActive = false
+	}
+
+	saved, err := h.resumes.UpsertResume(ctx, draft)
+	if err != nil {
+		h.log.Error("upsert parsed resume failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+
+	go h.processParsedResume(userID, text, saved, existing)
+
+	return c.JSON(http.StatusAccepted, dto.ParseStartResponse{Status: "processing"})
 }
