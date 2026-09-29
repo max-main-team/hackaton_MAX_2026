@@ -25,6 +25,9 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(401, 'unauthorized')
   }
   if (!res.ok) {
+    if (res.status >= 500) {
+      throw new ApiError(res.status, 'Ошибка сервера — попробуйте позже')
+    }
     let message = res.statusText
     try {
       const body = await res.json()

@@ -125,6 +125,11 @@ export default function ResumeScreen() {
       setError('Файл больше 10 МБ')
       return
     }
+    const head = new Uint8Array(await file.slice(0, 5).arrayBuffer())
+    if (String.fromCharCode(...head) !== '%PDF-') {
+      setError('Это не PDF-файл — проверьте расширение')
+      return
+    }
     try {
       setStage('extracting')
       const { extractPdfText } = await import('../../lib/pdf')
@@ -153,7 +158,7 @@ export default function ResumeScreen() {
       setExperienceDraft(null)
       if (result.ai_comment) setError('')
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError('Не удалось обработать PDF — заполните резюме вручную или попробуйте другой файл')
     } finally {
       setStage('idle')
       if (fileRef.current) fileRef.current.value = ''
