@@ -339,8 +339,9 @@ func (h *ResumeHandler) ParseFile(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "file is required")
 	}
-	if fileHeader.Size > 10*1024*1024 {
-		return echo.NewHTTPError(http.StatusBadRequest, "file is larger than 10 MB")
+	const maxUploadBytes = 25 * 1024 * 1024
+	if fileHeader.Size > maxUploadBytes {
+		return echo.NewHTTPError(http.StatusBadRequest, "file is larger than 25 MB — compress or export a smaller PDF")
 	}
 
 	src, err := fileHeader.Open()
@@ -366,14 +367,14 @@ func (h *ResumeHandler) ParseFile(c echo.Context) error {
 		_, _ = f.Read(head)
 		f.Close()
 		if string(head) != "%PDF-" {
-			return echo.NewHTTPError(http.StatusUnprocessableEntity, "not a PDF file")
+			return echo.NewHTTPError(http.StatusUnprocessableEntity, "this is not a PDF file — export the resume as PDF")
 		}
 	}
 
 	text, extractErr := extractPDFText(tmpPath)
 	text = strings.TrimSpace(text)
 	if extractErr != nil || len(text) < parseTextMinLen {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, "pdf has no text layer — fill the resume manually")
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, "this PDF has no text layer (likely a scan) — fill the resume manually")
 	}
 	if len(text) > parseTextMaxLen {
 		text = text[:parseTextMaxLen]

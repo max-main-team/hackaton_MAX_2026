@@ -22,7 +22,7 @@ const EMPTY_FORM: ResumeInput = {
   salary_max: null,
 }
 
-const MAX_PDF_BYTES = 10 * 1024 * 1024
+const MAX_PDF_BYTES = 25 * 1024 * 1024
 
 function parseLinks(raw: string | ResumeLink[] | null | undefined): ResumeLink[] {
   if (Array.isArray(raw)) return raw
@@ -132,7 +132,7 @@ export default function ResumeScreen() {
       return
     }
     if (file.size > MAX_PDF_BYTES) {
-      setError('Файл больше 10 МБ')
+      setError('Файл больше 25 МБ')
       return
     }
 
