@@ -1,0 +1,20 @@
+name: DB SQL (one-off, temp)
+
+on:
+  workflow_dispatch:
+    inputs:
+      sql:
+        description: 'SQL to execute on prod DB'
+        required: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run SQL on prod DB
+        env:
+          SQL: ${{ inputs.sql }}
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/dkey && chmod 600 /tmp/dkey
+          printf '%s' "$SQL" | ssh -o StrictHostKeyChecking=accept-new ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "docker exec -i max-miniapp-postgres-prod sh -c 'psql -U \$POSTGRES_USER -d \$POSTGRES_DB'"
