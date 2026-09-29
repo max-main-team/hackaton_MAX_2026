@@ -25,6 +25,12 @@ type ReferralItem struct {
 	JoinedAt  time.Time `json:"joined_at"`
 }
 
+type InvitedCompany struct {
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type VerifyRequest struct {
 	BotToken string `json:"bot_token"`
 }

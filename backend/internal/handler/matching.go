@@ -297,6 +297,17 @@ func (h *MatchingHandler) Action(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden, "not a member of this company")
 	}
 
+	if in.Action == "invite" {
+		ok, err := h.companies.ConsumeInvite(ctx, vacancy.CompanyID)
+		if err != nil {
+			h.log.Error("consume invite failed", slog.Any("err", err))
+			return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+		}
+		if !ok {
+			return echo.NewHTTPError(http.StatusConflict, "invite quota exceeded")
+		}
+	}
+
 	action, err := h.matching.GetOrCreateAction(ctx, vacancyID, userID, candidateID, in.Action)
 	if err != nil {
 		h.log.Error("create action failed", slog.Any("err", err))

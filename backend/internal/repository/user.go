@@ -159,3 +159,21 @@ func (r *UserRepo) ListReferrals(ctx context.Context, userID int64) ([]Referral,
 	}
 	return out, rows.Err()
 }
+
+// SetPendingRefCompany запоминает компанию-реферера из диплинка refc_,
+// если она существует и пользователь ещё не состоит в ней.
+func (r *UserRepo) SetPendingRefCompany(ctx context.Context, userID, companyID int64) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE users SET pending_ref_company_id = $2
+		WHERE id = $1 AND pending_ref_company_id IS NULL
+		  AND EXISTS (SELECT 1 FROM companies WHERE id = $2)
+		  AND NOT EXISTS (
+			SELECT 1 FROM company_members
+			WHERE company_members.user_id = users.id AND company_members.company_id = $2
+		  )
+	`, userID, companyID)
+	if err != nil {
+		return fmt.Errorf("set pending ref company: %w", err)
+	}
+	return nil
+}

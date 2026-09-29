@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -13,8 +14,9 @@ import (
 )
 
 type MeHandler struct {
-	users *repository.UserRepo
-	log   *slog.Logger
+	users     *repository.UserRepo
+	companies *repository.CompanyRepo
+	log       *slog.Logger
 }
 
 type referralResponse struct {
@@ -22,8 +24,8 @@ type referralResponse struct {
 	Items []dto.ReferralItem `json:"items"`
 }
 
-func NewMeHandler(users *repository.UserRepo, log *slog.Logger) *MeHandler {
-	return &MeHandler{users: users, log: log}
+func NewMeHandler(users *repository.UserRepo, companies *repository.CompanyRepo, log *slog.Logger) *MeHandler {
+	return &MeHandler{users: users, companies: companies, log: log}
 }
 
 // Me возвращает текущего пользователя и статус согласия на обработку ПДн.
@@ -148,5 +150,61 @@ func (h *MeHandler) SetRole(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.MeResponse{
 		User:                   dto.FromUser(user),
 		PersonalDataAcceptedAt: consentAt,
+	})
+}
+
+type companyReferralResponse struct {
+	InviteQuota int                  `json:"invite_quota"`
+	InviteUsed  int                  `json:"invite_used"`
+	PromoUntil  *time.Time           `json:"promo_until"`
+	Invited     []dto.InvitedCompany `json:"invited"`
+}
+
+// CompanyReferrals — B2B-рефералка: квота приглашений компании, промо и
+// список приглашённых компаний.
+//
+//	@Summary     Компания-реферер: квоты и приглашённые
+//	@Tags        referrals
+//	@Produce     json
+//	@Success     200 {object} companyReferralResponse
+//	@Failure     401 {object} dto.ErrorResponse
+//	@Failure     404 {object} dto.ErrorResponse
+//	@Security    BearerAuth
+//	@Router      /api/v1/my/company-referrals [get]
+func (h *MeHandler) CompanyReferrals(c echo.Context) error {
+	userID, err := middleware.UserIDFromContext(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	list, err := h.companies.ListByUser(c.Request().Context(), userID)
+	if err != nil {
+		h.log.Error("list companies failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+	if len(list) == 0 {
+		return echo.NewHTTPError(http.StatusNotFound, "no company")
+	}
+	company := list[0]
+
+	invited, err := h.companies.ListInvitedCompanies(c.Request().Context(), company.ID)
+	if err != nil {
+		h.log.Error("list invited companies failed", slog.Any("err", err))
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+	if invited == nil {
+		invited = []repository.InvitedCompany{}
+	}
+
+	items := make([]dto.InvitedCompany, 0, len(invited))
+	for _, ic := range invited {
+		items = append(items, dto.InvitedCompany{ID: ic.ID, Name: ic.Name, CreatedAt: ic.CreatedAt})
+	}
+
+	return c.JSON(http.StatusOK, companyReferralResponse{
+		InviteQuota: company.InviteQuota,
+		InviteUsed:  company.InviteUsed,
+		PromoUntil:  company.PromoUntil,
+		Invited:     items,
 	})
 }

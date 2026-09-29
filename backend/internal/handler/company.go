@@ -64,6 +64,10 @@ func (h *CompanyHandler) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
 	}
 
+	if err := h.companies.ApplyB2BAttribution(c.Request().Context(), saved.ID, userID); err != nil {
+		h.log.Warn("b2b attribution failed", slog.Any("err", err))
+	}
+
 	return c.JSON(http.StatusOK, dto.FromCompany(saved))
 }
 

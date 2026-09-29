@@ -93,6 +93,14 @@ func (h *AuthHandler) Auth(c echo.Context) error {
 		}
 	}
 
+	if startParam := auth.StartParam(req.InitData); strings.HasPrefix(startParam, "refc_") {
+		if refCompanyID, err := strconv.ParseInt(strings.TrimPrefix(startParam, "refc_"), 10, 64); err == nil {
+			if err := h.users.SetPendingRefCompany(c.Request().Context(), saved.ID, refCompanyID); err != nil {
+				h.log.Warn("set pending ref company failed", slog.Any("err", err))
+			}
+		}
+	}
+
 	return c.JSON(http.StatusOK, dto.AuthResponse{
 		Token:        token,
 		User:         dto.FromUser(saved),
