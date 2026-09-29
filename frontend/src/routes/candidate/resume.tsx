@@ -114,6 +114,11 @@ export default function ResumeScreen() {
 
   const uploadPdf = async (file: File) => {
     setError('')
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+    if (!isPdf) {
+      setError('Загрузите файл в формате PDF')
+      return
+    }
     if (file.size > MAX_PDF_BYTES) {
       setError('Файл больше 10 МБ')
       return

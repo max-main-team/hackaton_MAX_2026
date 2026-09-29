@@ -203,9 +203,9 @@ func (h *ResumeHandler) Parse(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	draft, err := h.ai.ExtractResume(ctx, text)
+	draft, extractErr := h.ai.ExtractResume(ctx, text)
 	notes := draft.Notes
-	if err != nil {
+	if extractErr != nil {
 		h.log.Error("ai extract resume failed", slog.Any("err", err))
 		notes = "Не удалось автоматически распознать текст — заполните поля вручную."
 	}
@@ -217,6 +217,20 @@ func (h *ResumeHandler) Parse(c echo.Context) error {
 	case err != nil:
 		h.log.Error("get resume failed", slog.Any("err", err))
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
+	}
+
+	if extractErr != nil || (strings.TrimSpace(draft.Title) == "" && strings.TrimSpace(draft.Skills) == "") {
+		// Не затираем резюме пользователя пустым черновиком.
+		if existing.ID != 0 {
+			return c.JSON(http.StatusOK, dto.ParseResumeResponse{
+				Resume:    dto.FromResume(existing),
+				AIComment: notes,
+			})
+		}
+		return c.JSON(http.StatusOK, dto.ParseResumeResponse{
+			Resume:    dto.FromResume(repository.Resume{IsActive: false}),
+			AIComment: notes,
+		})
 	}
 
 	resumeInput := repository.Resume{
