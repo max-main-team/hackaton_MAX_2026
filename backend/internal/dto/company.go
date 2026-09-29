@@ -82,9 +82,17 @@ type Vacancy struct {
 }
 
 type VacancyUpdate struct {
-	ResponseTTLHours    *int  `json:"response_ttl_hours" example:"72"`
-	MinExperienceMonths *int  `json:"min_experience_months"`
-	IsActive            *bool `json:"is_active"`
+	Title               *string `json:"title"`
+	Description         *string `json:"description"`
+	RequiredSkills      *string `json:"required_skills"`
+	MinExperienceMonths *int    `json:"min_experience_months"`
+	City                *string `json:"city"`
+	WorkFormat          *string `json:"work_format"`
+	EmploymentType      *string `json:"employment_type"`
+	SalaryMin           *int    `json:"salary_min"`
+	SalaryMax           *int    `json:"salary_max"`
+	ResponseTTLHours    *int    `json:"response_ttl_hours" example:"72"`
+	IsActive            *bool   `json:"is_active"`
 }
 
 func ValidateVacancyInput(in *VacancyInput) error {

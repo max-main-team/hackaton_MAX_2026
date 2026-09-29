@@ -64,7 +64,7 @@ export default function MapScreen() {
         if (!mapInstance.current) {
           mapInstance.current = new window.ymaps.Map(mapRef.current, {
             center: [items[0].lat, items[0].lng],
-            zoom: items.length === 1 ? 13 : 11,
+            zoom: items.length === 1 ? 12 : 10,
             controls: ['zoomControl', 'fullscreenControl'],
           })
         }
@@ -84,15 +84,18 @@ export default function MapScreen() {
         })
 
         if (items.length === 1) {
-          map.setCenter([items[0].lat, items[0].lng], 13)
+          map.setCenter([items[0].lat, items[0].lng], 12)
         } else if (items.length > 1) {
           map.setBounds(
             [
               [Math.min(...items.map((i) => i.lat)), Math.min(...items.map((i) => i.lng))],
               [Math.max(...items.map((i) => i.lat)), Math.max(...items.map((i) => i.lng))],
             ],
-            { checkZoomRange: true },
+            { checkZoomRange: true, zoomMargin: [80, 80] },
           )
+          if (map.getZoom() > 13) {
+            map.setZoom(13)
+          }
         }
       })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))

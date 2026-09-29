@@ -75,6 +75,9 @@ export default function VacanciesScreen() {
             <Link className="btn btn-ghost" style={{ flex: 1 }} to={`/vacancy/${v.id}/list`}>
               Список
             </Link>
+            <Link className="btn btn-ghost" style={{ flex: 1 }} to={`/company/vacancies/${v.id}/edit`}>
+              Изменить
+            </Link>
             <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => toggle(v)}>
               {v.is_active ? 'В архив' : 'Вернуть'}
             </button>

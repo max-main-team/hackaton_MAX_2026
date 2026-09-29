@@ -29,7 +29,7 @@ export function createVacancy(companyId: number, input: VacancyInput): Promise<V
 
 export function updateVacancy(
   id: number,
-  patch: { response_ttl_hours?: number; is_active?: boolean },
+  patch: Partial<VacancyInput> & { is_active?: boolean },
 ): Promise<Vacancy> {
   return request<Vacancy>(`/vacancies/${id}`, { method: 'PATCH', body: JSON.stringify(patch) })
 }

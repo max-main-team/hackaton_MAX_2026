@@ -3,6 +3,7 @@ package handler
 import (
 	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -72,7 +73,26 @@ func (h *VacancyHandler) Update(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "response_ttl_hours must be between 1 and 336")
 	}
 
-	saved, err := h.vacancies.Update(c.Request().Context(), vacancyID, in.ResponseTTLHours, in.MinExperienceMonths, in.IsActive)
+	if in.WorkFormat != nil && !slices.Contains(dto.WorkFormats, *in.WorkFormat) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid work_format")
+	}
+	if in.EmploymentType != nil && !slices.Contains(dto.EmploymentTypes, *in.EmploymentType) {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid employment_type")
+	}
+
+	saved, err := h.vacancies.Update(c.Request().Context(), vacancyID, repository.VacancyUpdate{
+		Title:               in.Title,
+		Description:         in.Description,
+		RequiredSkills:      in.RequiredSkills,
+		MinExperienceMonths: in.MinExperienceMonths,
+		City:                in.City,
+		WorkFormat:          in.WorkFormat,
+		EmploymentType:      in.EmploymentType,
+		SalaryMin:           in.SalaryMin,
+		SalaryMax:           in.SalaryMax,
+		ResponseTTLHours:    in.ResponseTTLHours,
+		IsActive:            in.IsActive,
+	})
 	if err != nil {
 		h.log.Error("update vacancy failed", slog.Any("err", err))
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")

@@ -9,6 +9,7 @@ import ReferralScreen from './candidate/referral'
 import CompanyScreen from './recruiter/company'
 import VacanciesScreen from './recruiter/vacancies'
 import VacancyNew from './recruiter/vacancy-new'
+import VacancyEdit from './recruiter/vacancy-edit'
 import Feed from './recruiter/feed'
 import CandidateList from './recruiter/candidate-list'
 import MapScreen from './map'
@@ -80,6 +81,14 @@ export const router = createBrowserRouter([
     element: (
       <Guard role="recruiter">
         <VacancyNew />
+      </Guard>
+    ),
+  },
+  {
+    path: '/company/vacancies/:id/edit',
+    element: (
+      <Guard role="recruiter">
+        <VacancyEdit />
       </Guard>
     ),
   },

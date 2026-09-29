@@ -12,6 +12,20 @@ import (
 	"max-miniapp/backend/internal/geo"
 )
 
+type VacancyUpdate struct {
+	Title               *string
+	Description         *string
+	RequiredSkills      *string
+	MinExperienceMonths *int
+	City                *string
+	WorkFormat          *string
+	EmploymentType      *string
+	SalaryMin           *int
+	SalaryMax           *int
+	ResponseTTLHours    *int
+	IsActive            *bool
+}
+
 var ErrVacancyNotFound = errors.New("vacancy not found")
 
 type Vacancy struct {
@@ -99,16 +113,26 @@ func (r *VacancyRepo) GetByID(ctx context.Context, id int64) (Vacancy, error) {
 }
 
 // Update частично обновляет вакансию: nil-аргументы не меняются.
-func (r *VacancyRepo) Update(ctx context.Context, id int64, ttlHours, minExp *int, active *bool) (Vacancy, error) {
+func (r *VacancyRepo) Update(ctx context.Context, id int64, in VacancyUpdate) (Vacancy, error) {
 	saved, err := scanVacancy(r.pool.QueryRow(ctx, `
 		UPDATE vacancies SET
-			response_ttl_hours    = COALESCE($2, response_ttl_hours),
-			min_experience_months = COALESCE($3, min_experience_months),
-			is_active             = COALESCE($4, is_active),
+			title                 = COALESCE($2, title),
+			description           = COALESCE($3, description),
+			required_skills       = COALESCE($4, required_skills),
+			min_experience_months = COALESCE($5, min_experience_months),
+			city                  = COALESCE($6, city),
+			work_format           = COALESCE($7, work_format),
+			employment_type       = COALESCE($8, employment_type),
+			salary_min            = COALESCE($9, salary_min),
+			salary_max            = COALESCE($10, salary_max),
+			response_ttl_hours    = COALESCE($11, response_ttl_hours),
+			is_active             = COALESCE($12, is_active),
 			updated_at            = now()
 		WHERE id = $1
 		RETURNING `+vacancyColumns,
-		id, ttlHours, minExp, active,
+		id, in.Title, in.Description, in.RequiredSkills, in.MinExperienceMonths,
+		in.City, in.WorkFormat, in.EmploymentType, in.SalaryMin, in.SalaryMax,
+		in.ResponseTTLHours, in.IsActive,
 	))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Vacancy{}, ErrVacancyNotFound

@@ -188,6 +188,7 @@ export default function VacancyNew() {
                   className="input plain"
                   type="number"
                   placeholder="от"
+                  style={{ width: `${Math.max(4, String(form.salary_min ?? '').length + 1)}ch` }}
                   value={form.salary_min ?? ''}
                   onChange={(e) => set('salary_min', e.target.value === '' ? null : Number(e.target.value))}
                 />
@@ -196,6 +197,7 @@ export default function VacancyNew() {
                   className="input plain"
                   type="number"
                   placeholder="до"
+                  style={{ width: `${Math.max(4, String(form.salary_max ?? '').length + 1)}ch` }}
                   value={form.salary_max ?? ''}
                   onChange={(e) => set('salary_max', e.target.value === '' ? null : Number(e.target.value))}
                 />

@@ -11,6 +11,7 @@ import clockSvg from '../assets/icons/clock.svg?raw'
 import alertCircleSvg from '../assets/icons/alert-circle.svg?raw'
 import checkSvg from '../assets/icons/check.svg?raw'
 import logoutSvg from '../assets/icons/logout.svg?raw'
+import swapSvg from '../assets/icons/swap.svg?raw'
 import userBigSvg from '../assets/icons/user-big.svg?raw'
 
 const icons = {
@@ -27,6 +28,7 @@ const icons = {
   alertCircle: alertCircleSvg,
   check: checkSvg,
   logout: logoutSvg,
+  swap: swapSvg,
   userBig: userBigSvg,
 }
 
