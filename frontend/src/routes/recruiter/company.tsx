@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { createCompany, myCompanies } from '../../api/company'
-import type { Company } from '../../api/types'
+import { companyReferrals, createCompany, myCompanies } from '../../api/company'
+import type { Company, CompanyReferralsResponse } from '../../api/types'
 import { Screen } from '../../components/Screen'
 import { VerifiedBadge } from '../../components/Badge'
+import { Icon } from '../../components/Icon'
+import { getWebApp } from '../../lib/max'
+
+const BOT_LINK = 'https://max.ru/t599_hakaton_max_bot?startapp='
 
 export default function CompanyScreen() {
   const [companies, setCompanies] = useState<Company[] | null>(null)
@@ -16,6 +20,8 @@ export default function CompanyScreen() {
     position: 'owner',
   })
   const [error, setError] = useState('')
+  const [referrals, setReferrals] = useState<CompanyReferralsResponse | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const load = () => {
     myCompanies()
@@ -24,6 +30,37 @@ export default function CompanyScreen() {
   }
 
   useEffect(load, [])
+
+  useEffect(() => {
+    if (companies?.[0]) {
+      companyReferrals()
+        .then(setReferrals)
+        .catch(() => {})
+    }
+  }, [companies])
+
+  const referralLink = companies?.[0] ? BOT_LINK + `refc_${companies[0].id}` : ''
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(referralLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setError('Не удалось скопировать')
+    }
+  }
+
+  const shareLink = () => {
+    const app = getWebApp()
+    if (app?.shareMaxContent) {
+      app.shareMaxContent({ text: `Ищем HR в команду платформы: ${referralLink}` })
+    } else if (navigator.share) {
+      navigator.share({ text: `Ищем HR в команду платформы: ${referralLink}` }).catch(() => {})
+    } else {
+      copyLink()
+    }
+  }
 
   const create = async () => {
     setError('')
@@ -72,6 +109,45 @@ export default function CompanyScreen() {
           <Link className="btn" to="/company/vacancies">
             Мои вакансии
           </Link>
+
+          <div className="form-section">
+            <p className="section-label">Пригласить HR</p>
+            <div className="card gap-sm">
+              {referrals && (
+                <div className="row between">
+                  <span className="muted" style={{ fontSize: 12 }}>Осталось приглашений</span>
+                  <span className="chip accent">
+                    {Math.max(0, referrals.invite_quota - referrals.invite_used)} из {referrals.invite_quota}
+                  </span>
+                </div>
+              )}
+              {referrals?.promo_until && new Date(referrals.promo_until) > new Date() && (
+                <span className="timer">🏷 Промо до {new Date(referrals.promo_until).toLocaleDateString('ru-RU')}</span>
+              )}
+              {referrals && referrals.invited.length > 0 && (
+                <div className="stack-tags">
+                  {referrals.invited.map((ic) => (
+                    <span className="chip" key={ic.id}>
+                      {ic.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <span className="muted" style={{ fontSize: 12 }}>
+                Пригласите HR из другой компании: они получают промо на 30 дней, вы — +5 приглашений
+              </span>
+              <span style={{ wordBreak: 'break-all', fontSize: 13 }}>{referralLink}</span>
+              <div className="row">
+                <button className="btn" style={{ flex: 1 }} onClick={copyLink}>
+                  {copied ? 'Скопировано ✓' : 'Скопировать'}
+                </button>
+                <button className="btn btn-ghost" style={{ flex: 1 }} onClick={shareLink}>
+                  <Icon name="plus" size={14} />
+                  Поделиться
+                </button>
+              </div>
+            </div>
+          </div>
         </>
       ) : (
         <>

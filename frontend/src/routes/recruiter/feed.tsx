@@ -7,7 +7,9 @@ import { WORK_FORMAT_LABELS } from '../../api/types'
 import { TabBar } from '../../components/TabBar'
 import { Icon } from '../../components/Icon'
 import { experienceLabel, shortCity } from '../../components/format'
+import { ApiError } from '../../api/client'
 import { getWebApp } from '../../lib/max'
+
 export default function Feed() {
   const { id } = useParams()
   const vacancyId = Number(id)
@@ -49,6 +51,10 @@ export default function Feed() {
       await candidateAction(vacancyId, current.user.id, action)
       setIndex((i) => i + 1)
     } catch (e) {
+      if (e instanceof ApiError && e.status === 409) {
+        setError('Приглашения закончились. Пригласите HR из другой компании — получите +5 приглашений')
+        return
+      }
       setError(e instanceof Error ? e.message : String(e))
     }
   }

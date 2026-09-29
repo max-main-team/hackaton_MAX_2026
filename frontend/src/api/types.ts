@@ -181,6 +181,19 @@ export interface ReferralsResponse {
   items: { id: number; first_name: string; joined_at: string }[]
 }
 
+export interface InvitedCompany {
+  id: number
+  name: string
+  created_at: string
+}
+
+export interface CompanyReferralsResponse {
+  invite_quota: number
+  invite_used: number
+  promo_until: string | null
+  invited: InvitedCompany[]
+}
+
 export const WORK_FORMATS = ['onsite', 'hybrid', 'remote']
 export const EMPLOYMENT_TYPES = ['full_time', 'part_time', 'contract', 'internship']
 export const WORK_FORMAT_LABELS: Record<string, string> = {

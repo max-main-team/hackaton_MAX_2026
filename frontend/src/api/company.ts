@@ -1,5 +1,5 @@
 import { request } from './client'
-import type { Company, Vacancy, VacancyInput } from './types'
+import type { Company, CompanyReferralsResponse, Vacancy, VacancyInput } from './types'
 
 export function createCompany(input: {
   name: string
@@ -32,4 +32,8 @@ export function updateVacancy(
   patch: { response_ttl_hours?: number; is_active?: boolean },
 ): Promise<Vacancy> {
   return request<Vacancy>(`/vacancies/${id}`, { method: 'PATCH', body: JSON.stringify(patch) })
+}
+
+export function companyReferrals(): Promise<CompanyReferralsResponse> {
+  return request<CompanyReferralsResponse>('/my/company-referrals')
 }

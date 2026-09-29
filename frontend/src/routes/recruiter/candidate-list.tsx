@@ -5,6 +5,7 @@ import type { CandidateItem } from '../../api/types'
 import { WORK_FORMAT_LABELS } from '../../api/types'
 import { TabBar } from '../../components/TabBar'
 import { UserCard } from '../../components/UserCard'
+import { ApiError } from '../../api/client'
 
 export default function CandidateList() {
   const { id } = useParams()
@@ -34,6 +35,10 @@ export default function CandidateList() {
       setTotal((t) => Math.max(0, t - 1))
       setExpanded(null)
     } catch (e) {
+      if (e instanceof ApiError && e.status === 409) {
+        setError('Приглашения закончились. Пригласите HR из другой компании — получите +5 приглашений')
+        return
+      }
       setError(e instanceof Error ? e.message : String(e))
     }
   }
