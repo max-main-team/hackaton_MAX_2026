@@ -5,6 +5,7 @@ import { EMPLOYMENT_TYPES, WORK_FORMATS, WORK_FORMAT_LABELS } from '../../api/ty
 import { Screen } from '../../components/Screen'
 import { Icon } from '../../components/Icon'
 import { digits } from '../../components/format'
+import { authHeaders } from '../../lib/session'
 
 const EMPTY_FORM: ResumeInput = {
   title: '',
@@ -149,7 +150,7 @@ export default function ResumeScreen() {
       } catch (e) {
         void fetch('/api/v1/debug/log', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify({ where: 'resume-parse', detail: e instanceof Error ? e.message : String(e) }),
         }).catch(() => {})
         setError('Не удалось распознать PDF — заполните резюме вручную')
@@ -190,7 +191,7 @@ export default function ResumeScreen() {
       const detail = e instanceof Error ? `${e.name}: ${e.message}` : String(e)
       void fetch('/api/v1/debug/log', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ where: 'resume-extract', detail }),
       }).catch(() => {})
       setError('Не удалось обработать PDF — заполните резюме вручную или попробуйте другой файл')
