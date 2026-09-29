@@ -18,3 +18,4 @@ dist/
 bot-start-error.png
 *.png
 !frontend/public/*.svg
+*.pdf
