@@ -9,7 +9,7 @@ info:
   contact: {}
   version: '1.0'
 servers:
-- url: https:///
+- url: https://eclipse-sim.ru/
 paths:
   /api/v1/auth:
     post:

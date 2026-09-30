@@ -66,7 +66,9 @@ def convert_operation(op):
 
 
 def convert(doc):
-    base = "{}://{}{}".format(doc.get("schemes", ["https"])[0], doc.get("host", ""), doc.get("basePath", "/"))
+    host = doc.get("host") or "eclipse-sim.ru"
+    scheme = (doc.get("schemes") or ["https"])[0]
+    base = "{}://{}{}".format(scheme, host, doc.get("basePath", "/"))
     out = {
         "openapi": "3.1.0",
         "info": doc.get("info", {"title": "API", "version": "1.0"}),
