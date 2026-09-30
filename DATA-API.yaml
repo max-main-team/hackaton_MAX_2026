@@ -1,0 +1,236 @@
+# DATA-API 1.0 — обязательные HTTP-проверки API реверс-найма MAX Mini App.
+# Секретов в файле нет: учётные данные тестовых ролей (candidate, recruiter)
+# передаются защищённым каналом проекта оценки решений.
+
+schemaVersion: "1.0"
+
+solution:
+  name: "MAX Mini App — Reverse Hiring"
+  teamId: "max-main-team"
+
+api:
+  baseUrl: "https://eclipse-sim.ru"
+  openapi: "./openapi.yaml"
+  defaultHeaders:
+    Accept: "application/json"
+
+checks:
+  - id: health
+    name: "Доступность API и БД"
+    description: "GET /health отвечает 200 и живостью сервиса и БД."
+    method: "GET"
+    path: "/api/v1/health"
+    role: "public"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["status", "db"]
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: auth-initdata
+    name: "Авторизация по initData"
+    description: "POST /auth принимает initData; без валидной подписи — 401. Платформа может подставить настоящие учётные данные тестового пользователя, тогда ответ 200 с token и user."
+    method: "POST"
+    path: "/api/v1/auth"
+    role: "public"
+    request:
+      headers:
+        Content-Type: "application/json"
+      body:
+        initData: "user=%7B%22id%22%3A710000001%2C%22first_name%22%3A%22DataAPI%22%7D&auth_date=1730000000"
+    expected:
+      statusCodes: [200, 401]
+      contentType: "application/json"
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: me-candidate
+    name: "Профиль кандидата"
+    description: "GET /me под JWT кандидата возвращает пользователя и реферальный код."
+    method: "GET"
+    path: "/api/v1/me"
+    role: "candidate"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["user", "referral_code"]
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: resume-upsert
+    name: "Сохранение резюме кандидата"
+    description: "PUT /my/resume создаёт или обновляет резюме кандидата (upsert, идемпотентно)."
+    method: "PUT"
+    path: "/api/v1/my/resume"
+    role: "candidate"
+    request:
+      headers:
+        Content-Type: "application/json"
+      body:
+        title: "Go-разработчик"
+        skills: "go, postgres, docker"
+        experience_months: 36
+        about: "Пишу сервисы на Go"
+        education: "ИТМО"
+        links: []
+        city: "Санкт-Петербург"
+        work_format: "remote"
+        employment_type: "full_time"
+        salary_min: 250000
+        salary_max: 350000
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["id", "title", "user_id"]
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: resume-read
+    name: "Чтение резюме кандидата"
+    method: "GET"
+    path: "/api/v1/my/resume"
+    role: "candidate"
+    dependsOn: ["resume-upsert"]
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["id", "title", "skills"]
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: invitations-list
+    name: "Приглашения кандидата"
+    description: "GET /my/invitations возвращает список приглашений со статусами (возможно, пустой)."
+    method: "GET"
+    path: "/api/v1/my/invitations"
+    role: "candidate"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: company-create
+    name: "Создание компании рекрутера"
+    description: "POST /companies создаёт компанию и добавляет рекрутера владельцем. Повторный прогон создаёт ещё одну демо-компанию (удаляемых компаний в API нет)."
+    method: "POST"
+    path: "/api/v1/companies"
+    role: "recruiter"
+    request:
+      headers:
+        Content-Type: "application/json"
+      body:
+        name: "DATA-API Check Company"
+        description: "Компания для автоматизированной технической проверки"
+        website: "https://example.com"
+        logo_url: ""
+        address: "Санкт-Петербург"
+        position: "owner"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["id", "name"]
+    timeoutMs: 5000
+    repeatable: false
+    extract:
+      companyId: "$.id"
+
+  - id: vacancy-create
+    name: "Создание вакансии"
+    description: "POST /companies/{id}/vacancies создаёт вакансию под компанией из предыдущего шага."
+    method: "POST"
+    path: "/api/v1/companies/{id}/vacancies"
+    role: "recruiter"
+    dependsOn: ["company-create"]
+    request:
+      headers:
+        Content-Type: "application/json"
+      path:
+        id: "${companyId}"
+      body:
+        title: "DATA-API Check Vacancy"
+        description: "Вакансия для автоматизированной технической проверки"
+        required_skills: "go, postgres"
+        min_experience_months: 12
+        city: "Санкт-Петербург"
+        work_format: "remote"
+        employment_type: "full_time"
+        salary_min: 200000
+        salary_max: 300000
+        response_ttl_hours: 24
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["id", "title", "company_id"]
+    timeoutMs: 5000
+    repeatable: false
+    extract:
+      vacancyId: "$.id"
+
+  - id: candidates-under-vacancy
+    name: "Подбор кандидатов под вакансию"
+    description: "GET /vacancies/{id}/candidates — приоритизированная выдача кандидатов под вакансию."
+    method: "GET"
+    path: "/api/v1/vacancies/{id}/candidates"
+    role: "recruiter"
+    dependsOn: ["vacancy-create"]
+    request:
+      path:
+        id: "${vacancyId}"
+      query:
+        mode: "list"
+        limit: 20
+        offset: 0
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["total", "items"]
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: all-candidates
+    name: "Все кандидаты компании"
+    description: "GET /candidates — активные резюме всех кандидатов независимо от метчинга, с поиском."
+    method: "GET"
+    path: "/api/v1/candidates"
+    role: "recruiter"
+    request:
+      query:
+        limit: 20
+        offset: 0
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["total", "items"]
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: vacancies-map
+    name: "Вакансии на карте"
+    description: "GET /vacancies/map — активные вакансии с координатами."
+    method: "GET"
+    path: "/api/v1/vacancies/map"
+    role: "recruiter"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+    timeoutMs: 5000
+    repeatable: true
+
+cleanup:
+  - id: vacancy-deactivate
+    method: "PATCH"
+    path: "/api/v1/vacancies/{id}"
+    role: "recruiter"
+    request:
+      headers:
+        Content-Type: "application/json"
+      path:
+        id: "${vacancyId}"
+      body:
+        is_active: false
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+    timeoutMs: 5000

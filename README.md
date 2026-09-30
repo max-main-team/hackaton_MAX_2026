@@ -100,6 +100,20 @@ curl -X POST http://localhost:8080/api/v1/auth \
   -d '{"initData": "user=%7B%22id%22%3A1%2C%22first_name%22%3A%22Ivan%22%7D&auth_date=1730000000"}'
 ```
 
+## DATA-API
+
+Корень репо содержит `DATA-API.yaml` — машиночитаемое описание
+обязательных HTTP-проверок (формат DATA-API 1.0) и `openapi.yaml` —
+OpenAPI 3.1, сгенерированный из живого Swagger. Регенерация:
+
+```bash
+cd backend && make swag
+python3 scripts/gen_openapi3.py   # берёт https://eclipse-sim.ru/swagger/doc.json
+```
+
+Проверка файла: `python3 validate_data_api.py DATA-API.yaml` (валидатор
+организаторов, JSON Schema + семантика + сверка с openapi.yaml).
+
 ## Интеграция с MAX
 
 - **MAX Bridge** — глобальный объект `window.WebApp` (скрипт подключён в `frontend/index.html`).

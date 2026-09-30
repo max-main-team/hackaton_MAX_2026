@@ -1,5 +1,25 @@
 basePath: /
 definitions:
+  internal_handler.DebugLog:
+    properties:
+      detail:
+        type: string
+      where:
+        type: string
+    type: object
+  internal_handler.companyReferralResponse:
+    properties:
+      invite_quota:
+        type: integer
+      invite_used:
+        type: integer
+      invited:
+        items:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.InvitedCompany'
+        type: array
+      promo_until:
+        type: string
+    type: object
   internal_handler.referralResponse:
     properties:
       count:
@@ -8,6 +28,15 @@ definitions:
         items:
           $ref: '#/definitions/max-miniapp_backend_internal_dto.ReferralItem'
         type: array
+    type: object
+  max-miniapp_backend_internal_dto.AllCandidatesResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.CandidateCard'
+        type: array
+      total:
+        type: integer
     type: object
   max-miniapp_backend_internal_dto.AuthRequest:
     properties:
@@ -23,6 +52,13 @@ definitions:
       token:
         example: eyJhbGciOiJIUzI1NiIs...
         type: string
+      user:
+        $ref: '#/definitions/max-miniapp_backend_internal_dto.User'
+    type: object
+  max-miniapp_backend_internal_dto.CandidateCard:
+    properties:
+      resume:
+        $ref: '#/definitions/max-miniapp_backend_internal_dto.Resume'
       user:
         $ref: '#/definitions/max-miniapp_backend_internal_dto.User'
     type: object
@@ -58,6 +94,10 @@ definitions:
     properties:
       address:
         example: Москва, ул. Тверская, 1
+        type: string
+      bot_user_id:
+        type: integer
+      bot_username:
         type: string
       created_at:
         type: string
@@ -116,10 +156,28 @@ definitions:
         example: true
         type: boolean
     type: object
+  max-miniapp_backend_internal_dto.DemoAuthRequest:
+    properties:
+      firstName:
+        example: Demo
+        type: string
+      userId:
+        example: 700000123
+        type: integer
+    type: object
   max-miniapp_backend_internal_dto.ErrorResponse:
     properties:
       message:
         example: invalid request body
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.HealthResponse:
+    properties:
+      db:
+        example: ok
+        type: string
+      status:
+        example: ok
         type: string
     type: object
   max-miniapp_backend_internal_dto.Invitation:
@@ -158,7 +216,22 @@ definitions:
         type: string
       id:
         type: integer
+      salary_max:
+        type: integer
+      salary_min:
+        type: integer
       title:
+        type: string
+      work_format:
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.InvitedCompany:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
         type: string
     type: object
   max-miniapp_backend_internal_dto.MapVacancy:
@@ -204,6 +277,30 @@ definitions:
         type: string
       user:
         $ref: '#/definitions/max-miniapp_backend_internal_dto.User'
+    type: object
+  max-miniapp_backend_internal_dto.ParseResumeRequest:
+    properties:
+      source_name:
+        example: resume.pdf
+        type: string
+      text:
+        example: Иван Петров, Go-разработчик, 4 года опыта...
+        type: string
+    type: object
+  max-miniapp_backend_internal_dto.ParseResumeResponse:
+    properties:
+      ai_comment:
+        example: Извлекли должность, навыки, опыт; зарплату не нашли
+        type: string
+      resume:
+        $ref: '#/definitions/max-miniapp_backend_internal_dto.Resume'
+    type: object
+  max-miniapp_backend_internal_dto.ParseStartResponse:
+    properties:
+      status:
+        enum:
+        - processing
+        type: string
     type: object
   max-miniapp_backend_internal_dto.RecruiterActionResponse:
     properties:
@@ -268,6 +365,13 @@ definitions:
         items:
           type: object
         type: array
+      parse_status:
+        enum:
+        - ""
+        - processing
+        - done
+        - failed
+        type: string
       salary_max:
         example: 250000
         type: integer
@@ -488,13 +592,29 @@ definitions:
     type: object
   max-miniapp_backend_internal_dto.VacancyUpdate:
     properties:
+      city:
+        type: string
+      description:
+        type: string
+      employment_type:
+        type: string
       is_active:
         type: boolean
       min_experience_months:
         type: integer
+      required_skills:
+        type: string
       response_ttl_hours:
         example: 72
         type: integer
+      salary_max:
+        type: integer
+      salary_min:
+        type: integer
+      title:
+        type: string
+      work_format:
+        type: string
     type: object
   max-miniapp_backend_internal_dto.VerifyRequest:
     properties:
@@ -557,6 +677,73 @@ paths:
       summary: Авторизация по initData
       tags:
       - auth
+  /api/v1/auth/demo:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт/возвращает тестового пользователя и JWT. В prod отключён.
+      parameters:
+      - description: параметры тестового пользователя
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.DemoAuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.AuthResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      summary: Демо-вход (только dev)
+      tags:
+      - auth
+  /api/v1/candidates:
+    get:
+      description: |-
+        Активные резюме всех кандидатов, поиск по title/skills/city,
+        пагинация limit/offset. Роль рекрутера обязательна.
+      parameters:
+      - description: подстрока в title/skills/city
+        in: query
+        name: q
+        type: string
+      - description: "20"
+        in: query
+        name: limit
+        type: integer
+      - description: "0"
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.AllCandidatesResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Все кандидаты (для компаний)
+      tags:
+      - matching
   /api/v1/companies:
     post:
       consumes:
@@ -715,6 +902,47 @@ paths:
       summary: Верифицировать компанию
       tags:
       - company
+  /api/v1/debug/log:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: куда и что упало
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.DebugLog'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Клиентская ошибка в лог
+      tags:
+      - debug
+  /api/v1/health:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.HealthResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.HealthResponse'
+      summary: Здоровье сервиса
+      tags:
+      - system
   /api/v1/invitations/{id}/respond:
     post:
       consumes:
@@ -848,6 +1076,28 @@ paths:
       summary: Мои компании
       tags:
       - company
+  /api/v1/my/company-referrals:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.companyReferralResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 'Компания-реферер: квоты и приглашённые'
+      tags:
+      - referrals
   /api/v1/my/invitations:
     get:
       produces:
@@ -986,6 +1236,79 @@ paths:
       security:
       - BearerAuth: []
       summary: Подтвердить актуальность подбора
+      tags:
+      - resume
+  /api/v1/my/resume/parse:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Принимает текст резюме, AI извлекает поля по нашей схеме.
+        Создаёт черновик (source=file_parse, is_active=false, source_text сохранён).
+        Если AI недоступен — черновик только с текстом, поля пустые.
+      parameters:
+      - description: текст резюме
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/max-miniapp_backend_internal_dto.ParseResumeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ParseResumeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Распарсить текст резюме
+      tags:
+      - resume
+  /api/v1/my/resume/parse-file:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: PDF-файл резюме (до 10 МБ)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ParseStartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/max-miniapp_backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Загрузить PDF-резюме
       tags:
       - resume
   /api/v1/vacancies/{id}:

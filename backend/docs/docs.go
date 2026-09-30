@@ -67,6 +67,108 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/auth/demo": {
+            "post": {
+                "description": "Создаёт/возвращает тестового пользователя и JWT. В prod отключён.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Демо-вход (только dev)",
+                "parameters": [
+                    {
+                        "description": "параметры тестового пользователя",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.DemoAuthRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.AuthResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/candidates": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Активные резюме всех кандидатов, поиск по title/skills/city,\nпагинация limit/offset. Роль рекрутера обязательна.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "matching"
+                ],
+                "summary": "Все кандидаты (для компаний)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "подстрока в title/skills/city",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "20",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "0",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.AllCandidatesResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/companies": {
             "post": {
                 "security": [
@@ -314,6 +416,72 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/debug/log": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "debug"
+                ],
+                "summary": "Клиентская ошибка в лог",
+                "parameters": [
+                    {
+                        "description": "куда и что упало",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.DebugLog"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/health": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Здоровье сервиса",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/invitations/{id}/respond": {
             "post": {
                 "security": [
@@ -519,6 +687,42 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/my/company-referrals": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "referrals"
+                ],
+                "summary": "Компания-реферер: квоты и приглашённые",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.companyReferralResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
                         }
@@ -741,6 +945,117 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/my/resume/parse": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Принимает текст резюме, AI извлекает поля по нашей схеме.\nСоздаёт черновик (source=file_parse, is_active=false, source_text сохранён).\nЕсли AI недоступен — черновик только с текстом, поля пустые.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "resume"
+                ],
+                "summary": "Распарсить текст резюме",
+                "parameters": [
+                    {
+                        "description": "текст резюме",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ParseResumeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ParseResumeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/my/resume/parse-file": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "resume"
+                ],
+                "summary": "Загрузить PDF-резюме",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "PDF-файл резюме (до 10 МБ)",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ParseStartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/max-miniapp_backend_internal_dto.ErrorResponse"
                         }
@@ -1032,6 +1347,37 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "internal_handler.DebugLog": {
+            "type": "object",
+            "properties": {
+                "detail": {
+                    "type": "string"
+                },
+                "where": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.companyReferralResponse": {
+            "type": "object",
+            "properties": {
+                "invite_quota": {
+                    "type": "integer"
+                },
+                "invite_used": {
+                    "type": "integer"
+                },
+                "invited": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/max-miniapp_backend_internal_dto.InvitedCompany"
+                    }
+                },
+                "promo_until": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_handler.referralResponse": {
             "type": "object",
             "properties": {
@@ -1043,6 +1389,20 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/max-miniapp_backend_internal_dto.ReferralItem"
                     }
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.AllCandidatesResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/max-miniapp_backend_internal_dto.CandidateCard"
+                    }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
@@ -1065,6 +1425,17 @@ const docTemplate = `{
                 "token": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIs..."
+                },
+                "user": {
+                    "$ref": "#/definitions/max-miniapp_backend_internal_dto.User"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.CandidateCard": {
+            "type": "object",
+            "properties": {
+                "resume": {
+                    "$ref": "#/definitions/max-miniapp_backend_internal_dto.Resume"
                 },
                 "user": {
                     "$ref": "#/definitions/max-miniapp_backend_internal_dto.User"
@@ -1119,6 +1490,12 @@ const docTemplate = `{
                 "address": {
                     "type": "string",
                     "example": "Москва, ул. Тверская, 1"
+                },
+                "bot_user_id": {
+                    "type": "integer"
+                },
+                "bot_username": {
+                    "type": "string"
                 },
                 "created_at": {
                     "type": "string"
@@ -1200,12 +1577,38 @@ const docTemplate = `{
                 }
             }
         },
+        "max-miniapp_backend_internal_dto.DemoAuthRequest": {
+            "type": "object",
+            "properties": {
+                "firstName": {
+                    "type": "string",
+                    "example": "Demo"
+                },
+                "userId": {
+                    "type": "integer",
+                    "example": 700000123
+                }
+            }
+        },
         "max-miniapp_backend_internal_dto.ErrorResponse": {
             "type": "object",
             "properties": {
                 "message": {
                     "type": "string",
                     "example": "invalid request body"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "db": {
+                    "type": "string",
+                    "example": "ok"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "ok"
                 }
             }
         },
@@ -1263,7 +1666,30 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "salary_max": {
+                    "type": "integer"
+                },
+                "salary_min": {
+                    "type": "integer"
+                },
                 "title": {
+                    "type": "string"
+                },
+                "work_format": {
+                    "type": "string"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.InvitedCompany": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
                     "type": "string"
                 }
             }
@@ -1332,6 +1758,42 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/max-miniapp_backend_internal_dto.User"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.ParseResumeRequest": {
+            "type": "object",
+            "properties": {
+                "source_name": {
+                    "type": "string",
+                    "example": "resume.pdf"
+                },
+                "text": {
+                    "type": "string",
+                    "example": "Иван Петров, Go-разработчик, 4 года опыта..."
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.ParseResumeResponse": {
+            "type": "object",
+            "properties": {
+                "ai_comment": {
+                    "type": "string",
+                    "example": "Извлекли должность, навыки, опыт; зарплату не нашли"
+                },
+                "resume": {
+                    "$ref": "#/definitions/max-miniapp_backend_internal_dto.Resume"
+                }
+            }
+        },
+        "max-miniapp_backend_internal_dto.ParseStartResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "processing"
+                    ]
                 }
             }
         },
@@ -1425,6 +1887,15 @@ const docTemplate = `{
                     "items": {
                         "type": "object"
                     }
+                },
+                "parse_status": {
+                    "type": "string",
+                    "enum": [
+                        "",
+                        "processing",
+                        "done",
+                        "failed"
+                    ]
                 },
                 "salary_max": {
                     "type": "integer",
@@ -1728,15 +2199,39 @@ const docTemplate = `{
         "max-miniapp_backend_internal_dto.VacancyUpdate": {
             "type": "object",
             "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "employment_type": {
+                    "type": "string"
+                },
                 "is_active": {
                     "type": "boolean"
                 },
                 "min_experience_months": {
                     "type": "integer"
                 },
+                "required_skills": {
+                    "type": "string"
+                },
                 "response_ttl_hours": {
                     "type": "integer",
                     "example": 72
+                },
+                "salary_max": {
+                    "type": "integer"
+                },
+                "salary_min": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "work_format": {
+                    "type": "string"
                 }
             }
         },
