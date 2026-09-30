@@ -93,7 +93,7 @@ docker compose up -d --build
 | `DATABASE_URL` | собирается из значений выше | строка подключения бекенда |
 | `MAX_BOT_TOKEN` | — | токен бота MAX: проверка подписи initData, команды бота, рассылки |
 | `AI_API_KEY` | — | ключ z.ai: AI-скоринг пар и AI-парсинг PDF-резюме |
-| `AI_BASE_URL` / `AI_MODEL` | `https://api.z.ai/api/paas/v4` / `glm-4.5-flash` | эндпоинт и модель LLM |
+| `AI_BASE_URL` / `AI_MODEL` | `https://api.z.ai/api/paas/v4` / `glm-4.5-flash` | эндпоинт и модель LLM (OpenAI-совместимый API — подставляется любой провайдер, например Яндекс GPT или GigaChat) |
 | `VITE_YANDEX_MAPS_API_KEY` | — | ключ Яндекс Карт, встраивается во фронтенд при сборке |
 | `ADDR`, `ENV` | `:8080`, `dev` | адрес слушателя и режим бекенда |
 
@@ -107,7 +107,7 @@ docker compose up -d --build
 | Сервис | Назначение |
 |---|---|
 | Bot API MAX (`platform-api2.max.ru`) | команды бота, приветствия, еженедельный опрос, проверка подписи `initData` |
-| z.ai (LLM, OpenAI-совместимый API) | AI-скоринг пар «вакансия↔резюме», AI-парсинг PDF-резюме |
+| z.ai (LLM, OpenAI-совместимый API) | AI-скоринг пар «вакансия↔резюме», AI-парсинг PDF-резюме. Провайдер легко меняется: любое OpenAI-совместимое API — Яндекс GPT, GigaChat и др. — достаточно заменить `AI_API_KEY`, `AI_BASE_URL` и `AI_MODEL` |
 | Яндекс Карты (JS API) | карта вакансий |
 
 ## 7. Работа с данными
