@@ -97,11 +97,9 @@ func truncateForLog(b []byte) string {
 }
 
 func (w *BotWorker) poll(ctx context.Context) error {
-	url := updatesURL
+	url := updatesURL + "?timeout=30"
 	if w.marker > 0 {
-		url = fmt.Sprintf("%s?marker=%d&time=30", updatesURL, w.marker)
-	} else {
-		url += "?time=30"
+		url = fmt.Sprintf("%s?marker=%d&timeout=30", updatesURL, w.marker)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -124,49 +122,27 @@ func (w *BotWorker) poll(ctx context.Context) error {
 	rawBody, _ := io.ReadAll(resp.Body)
 	w.log.Debug("bot poll raw", slog.Int("len", len(rawBody)), slog.String("body", string(rawBody)))
 
-	var parsed struct {
-		Updates []struct {
-			UpdateType string `json:"update_type"`
-			Payload    struct {
-				CallbackID string `json:"callback_id"`
-				Chat       struct {
-					ChatID int64 `json:"chat_id"`
-				} `json:"chat"`
-				User struct {
-					ID        int64  `json:"id"`
-					FirstName string `json:"first_name"`
-				} `json:"user"`
-				Message struct {
-					Text      string `json:"text"`
-					Timestamp int64  `json:"timestamp"`
-					Recipient struct {
-						ChatID int64 `json:"chat_id"`
-					} `json:"recipient"`
-				} `json:"message"`
-			} `json:"payload"`
-		} `json:"updates"`
-		Marker json.Number `json:"marker"`
-	}
+	var parsed botUpdatesPage
 	if err := json.Unmarshal(rawBody, &parsed); err != nil {
 		return fmt.Errorf("decode updates: %w", err)
 	}
 
-	if m, err := parsed.Marker.Int64(); err == nil && m > 0 {
-		w.marker = m
+	if parsed.Marker != nil && *parsed.Marker > 0 {
+		w.marker = *parsed.Marker
 	}
 	w.log.Info("bot poll", slog.Int("updates", len(parsed.Updates)), slog.Int64("marker", w.marker))
 	for _, u := range parsed.Updates {
 		w.log.Info("bot update",
 			slog.String("type", u.UpdateType),
-			slog.Int64("ts", u.Payload.Message.Timestamp),
-			slog.Int64("chat_id", u.Payload.Message.Recipient.ChatID),
-			slog.String("text", u.Payload.Message.Text))
+			slog.Int64("ts", u.eventTimestamp()),
+			slog.Int64("chat_id", u.chatID()),
+			slog.String("text", u.Message.Body.Text))
 	}
 
 	for _, u := range parsed.Updates {
 		switch u.UpdateType {
 		case "bot_started":
-			if uid := u.Payload.User.ID; uid != 0 {
+			if uid := u.User.UserID; uid != 0 {
 				if err := w.sendMessageToUser(ctx, uid, greetingMessage()); err != nil {
 					w.log.Error("bot_started greeting failed", slog.Int64("user_id", uid), slog.Any("err", err))
 				} else {
@@ -174,7 +150,7 @@ func (w *BotWorker) poll(ctx context.Context) error {
 				}
 			}
 		case "message_created":
-			if ts := u.Payload.Message.Timestamp; ts > 0 {
+			if ts := u.eventTimestamp(); ts > 0 {
 				var msgTime time.Time
 				if ts > 1_000_000_000_000 {
 					msgTime = time.UnixMilli(ts)
@@ -185,12 +161,64 @@ func (w *BotWorker) poll(ctx context.Context) error {
 					continue
 				}
 			}
-			w.handleMessage(ctx, u.Payload.Message.Recipient.ChatID, u.Payload.User.ID, u.Payload.Message.Text)
+			chatID := u.Message.Recipient.ChatID
+			if chatID == 0 {
+				w.log.Warn("bot message has no chat_id")
+				continue
+			}
+			w.handleMessage(ctx, chatID, u.Message.Sender.UserID, u.Message.Body.Text)
 		case "message_callback":
-			w.answerCallback(ctx, u.Payload.CallbackID)
+			if u.Callback.CallbackID != "" {
+				w.answerCallback(ctx, u.Callback.CallbackID)
+			}
 		}
 	}
 	return nil
+}
+
+type botUpdatesPage struct {
+	Updates []botUpdate `json:"updates"`
+	Marker  *int64      `json:"marker"`
+}
+
+type botAPIUser struct {
+	UserID    int64  `json:"user_id"`
+	FirstName string `json:"first_name"`
+}
+
+type botUpdate struct {
+	UpdateType string     `json:"update_type"`
+	Timestamp  int64      `json:"timestamp"`
+	ChatID     int64      `json:"chat_id"`
+	User       botAPIUser `json:"user"`
+	Message    struct {
+		Timestamp int64      `json:"timestamp"`
+		Sender    botAPIUser `json:"sender"`
+		Recipient struct {
+			ChatID int64 `json:"chat_id"`
+			UserID int64 `json:"user_id"`
+		} `json:"recipient"`
+		Body struct {
+			Text string `json:"text"`
+		} `json:"body"`
+	} `json:"message"`
+	Callback struct {
+		CallbackID string `json:"callback_id"`
+	} `json:"callback"`
+}
+
+func (u botUpdate) eventTimestamp() int64 {
+	if u.Message.Timestamp > 0 {
+		return u.Message.Timestamp
+	}
+	return u.Timestamp
+}
+
+func (u botUpdate) chatID() int64 {
+	if u.Message.Recipient.ChatID != 0 {
+		return u.Message.Recipient.ChatID
+	}
+	return u.ChatID
 }
 
 type keyboardButton struct {

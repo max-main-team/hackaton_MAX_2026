@@ -26,6 +26,31 @@ func TestRouteCommand(t *testing.T) {
 	assert.Equal(t, "unknown", routeCommand("   "))
 }
 
+func TestDecodeCurrentMAXUpdates(t *testing.T) {
+	raw := []byte(`{"updates":[{"update_type":"bot_started","timestamp":1760000000000,"chat_id":101,"user":{"user_id":202,"first_name":"Анна"},"payload":null},{"update_type":"message_created","timestamp":1760000001000,"message":{"sender":{"user_id":202,"first_name":"Анна"},"recipient":{"chat_id":101,"user_id":303},"timestamp":1760000001000,"body":{"mid":"mid.1","text":"/start"}}},{"update_type":"message_callback","timestamp":1760000002000,"callback":{"callback_id":"callback.1","payload":"help"},"message":{"recipient":{"chat_id":101}}}],"marker":42}`)
+
+	var page botUpdatesPage
+	require.NoError(t, json.Unmarshal(raw, &page))
+	require.Len(t, page.Updates, 3)
+	require.NotNil(t, page.Marker)
+	assert.Equal(t, int64(42), *page.Marker)
+
+	started := page.Updates[0]
+	assert.Equal(t, int64(202), started.User.UserID)
+	assert.Equal(t, int64(101), started.chatID())
+	assert.Equal(t, int64(1760000000000), started.eventTimestamp())
+
+	message := page.Updates[1]
+	assert.Equal(t, int64(202), message.Message.Sender.UserID)
+	assert.Equal(t, int64(101), message.chatID())
+	assert.Equal(t, "/start", message.Message.Body.Text)
+	assert.Equal(t, "start", routeCommand(message.Message.Body.Text))
+
+	callback := page.Updates[2]
+	assert.Equal(t, "callback.1", callback.Callback.CallbackID)
+	assert.Equal(t, int64(101), callback.chatID())
+}
+
 func TestStatusMessageNewUser(t *testing.T) {
 	msg := statusMessage(botUserStatus{})
 	text, _ := msg["text"].(string)
