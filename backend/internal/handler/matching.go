@@ -49,26 +49,24 @@ func NewMatchingHandler(
 	}
 }
 
-// Candidates возвращает приоритизированный список кандидатов под вакансию.
-//
-//	@Summary     Кандидаты под вакансию
-//	@Description mode=list — постранично (limit/offset), mode=feed — лента без пагинации.
-//	@Description Только кандидаты с активным резюме и без действия по этой вакансии.
-//	@Tags        matching
-//	@Produce     json
-//	@Param       id     path integer true "ID вакансии"
-//	@Param       mode   query  string  false "list" Enums(list, feed)
-//	@Param       limit  query  integer false "20"
-//	@Param       offset query  integer false "0"
-//	@Success     200 {object} dto.CandidatesResponse
-//	@Failure     400 {object} dto.ErrorResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     403 {object} dto.ErrorResponse
-//	@Failure     404 {object} dto.ErrorResponse
-//	@Failure     409 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/vacancies/{id}/candidates [get]
+// @Summary     Кандидаты под вакансию
+// @Description mode=list — постранично (limit/offset), mode=feed — лента без пагинации.
+// @Description Только кандидаты с активным резюме и без действия по этой вакансии.
+// @Tags        matching
+// @Produce     json
+// @Param       id     path integer true "ID вакансии"
+// @Param       mode   query  string  false "list" Enums(list, feed)
+// @Param       limit  query  integer false "20"
+// @Param       offset query  integer false "0"
+// @Success     200 {object} dto.CandidatesResponse
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     403 {object} dto.ErrorResponse
+// @Failure     404 {object} dto.ErrorResponse
+// @Failure     409 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/vacancies/{id}/candidates [get]
 func (h *MatchingHandler) Candidates(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -165,7 +163,6 @@ func (h *MatchingHandler) Candidates(c echo.Context) error {
 		}
 	}
 	if aiMissing {
-		// AI-обогащение в фоне: ответ не блокируем, оценки дозаполнятся к следующему запросу
 		sem := make(chan struct{}, 4)
 		var wg sync.WaitGroup
 		for idx := range entries {
@@ -243,22 +240,20 @@ func (h *MatchingHandler) Candidates(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-// Action фиксирует действие рекрутера на кандидата (invite/skip).
-//
-//	@Summary     Действие рекрутера на кандидата
-//	@Tags        matching
-//	@Accept      json
-//	@Produce     json
-//	@Param       id              path integer true "ID вакансии"
-//	@Param       candidateUserId path integer true "ID кандидата"
-//	@Param       request body dto.RecruiterActionResponse true "action"
-//	@Success     200 {object} dto.RecruiterActionResponse
-//	@Failure     400 {object} dto.ErrorResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     403 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/vacancies/{id}/candidates/{candidateUserId}/action [post]
+// @Summary     Действие рекрутера на кандидата
+// @Tags        matching
+// @Accept      json
+// @Produce     json
+// @Param       id              path integer true "ID вакансии"
+// @Param       candidateUserId path integer true "ID кандидата"
+// @Param       request body dto.RecruiterActionResponse true "action"
+// @Success     200 {object} dto.RecruiterActionResponse
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     403 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/vacancies/{id}/candidates/{candidateUserId}/action [post]
 func (h *MatchingHandler) Action(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -319,16 +314,14 @@ func (h *MatchingHandler) Action(c echo.Context) error {
 	})
 }
 
-// Invitations возвращает приглашения текущего кандидата со статусами TTL.
-//
-//	@Summary     Мои приглашения
-//	@Tags        invitations
-//	@Produce     json
-//	@Success     200 {array} dto.Invitation
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/my/invitations [get]
+// @Summary     Мои приглашения
+// @Tags        invitations
+// @Produce     json
+// @Success     200 {array} dto.Invitation
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/my/invitations [get]
 func (h *MatchingHandler) Invitations(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -379,23 +372,21 @@ func (h *MatchingHandler) Invitations(c echo.Context) error {
 	return c.JSON(http.StatusOK, out)
 }
 
-// Respond — ответ кандидата на приглашение (accept создаёт матч).
-//
-//	@Summary     Ответить на приглашение
-//	@Tags        invitations
-//	@Accept      json
-//	@Produce     json
-//	@Param       id     path integer true "ID приглашения"
-//	@Param       request body dto.RespondRequest true "ответ"
-//	@Success     200 {object} dto.MatchResult
-//	@Failure     400 {object} dto.ErrorResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     403 {object} dto.ErrorResponse
-//	@Failure     404 {object} dto.ErrorResponse
-//	@Failure     409 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/invitations/{id}/respond [post]
+// @Summary     Ответить на приглашение
+// @Tags        invitations
+// @Accept      json
+// @Produce     json
+// @Param       id     path integer true "ID приглашения"
+// @Param       request body dto.RespondRequest true "ответ"
+// @Success     200 {object} dto.MatchResult
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     403 {object} dto.ErrorResponse
+// @Failure     404 {object} dto.ErrorResponse
+// @Failure     409 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/invitations/{id}/respond [post]
 func (h *MatchingHandler) Respond(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {

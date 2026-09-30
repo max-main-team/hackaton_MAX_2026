@@ -79,7 +79,6 @@ func (r *UserRepo) GetByID(ctx context.Context, id int64) (User, error) {
 	return u, nil
 }
 
-// UpdateRole меняет роль пользователя (candidate/recruiter).
 func (r *UserRepo) UpdateRole(ctx context.Context, id int64, role string) error {
 	_, err := r.pool.Exec(ctx, `
 		UPDATE users SET role = $2, updated_at = now() WHERE id = $1
@@ -92,7 +91,6 @@ func (r *UserRepo) UpdateRole(ctx context.Context, id int64, role string) error 
 
 const ConsentPersonalData = "personal_data"
 
-// UpsertConsent фиксирует согласие пользователя (повторное — обновляет дату).
 func (r *UserRepo) UpsertConsent(ctx context.Context, userID int64, consent string) error {
 	_, err := r.pool.Exec(ctx, `
 		INSERT INTO user_consents (user_id, consent)
@@ -105,7 +103,6 @@ func (r *UserRepo) UpsertConsent(ctx context.Context, userID int64, consent stri
 	return nil
 }
 
-// GetConsentAcceptedAt возвращает дату согласия или nil, если его нет.
 func (r *UserRepo) GetConsentAcceptedAt(ctx context.Context, userID int64, consent string) (*time.Time, error) {
 	var at *time.Time
 	err := r.pool.QueryRow(ctx, `
@@ -122,7 +119,6 @@ func (r *UserRepo) GetConsentAcceptedAt(ctx context.Context, userID int64, conse
 	return at, nil
 }
 
-// SetReferrerIfEmpty записывает реферера только если он ещё не установлен.
 func (r *UserRepo) SetReferrerIfEmpty(ctx context.Context, userID, referrerID int64) error {
 	_, err := r.pool.Exec(ctx, `
 		UPDATE users SET referrer_id = $2, referrer_at = now()
@@ -160,8 +156,6 @@ func (r *UserRepo) ListReferrals(ctx context.Context, userID int64) ([]Referral,
 	return out, rows.Err()
 }
 
-// SetPendingRefCompany запоминает компанию-реферера из диплинка refc_,
-// если она существует и пользователь ещё не состоит в ней.
 func (r *UserRepo) SetPendingRefCompany(ctx context.Context, userID, companyID int64) error {
 	_, err := r.pool.Exec(ctx, `
 		UPDATE users SET pending_ref_company_id = $2

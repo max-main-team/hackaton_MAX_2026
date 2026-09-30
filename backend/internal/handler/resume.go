@@ -35,16 +35,14 @@ func NewResumeHandler(resumes *repository.ResumeRepo, ai *scoring.AIClient, log 
 	return &ResumeHandler{resumes: resumes, ai: ai, log: log}
 }
 
-// Get возвращает резюме текущего кандидата.
-//
-//	@Summary     Моё резюме
-//	@Tags        resume
-//	@Produce     json
-//	@Success     200 {object} dto.Resume
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     404 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/my/resume [get]
+// @Summary     Моё резюме
+// @Tags        resume
+// @Produce     json
+// @Success     200 {object} dto.Resume
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     404 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/my/resume [get]
 func (h *ResumeHandler) Get(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -63,21 +61,19 @@ func (h *ResumeHandler) Get(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.FromResume(resume))
 }
 
-// Put создаёт или обновляет резюме (upsert + версия в историю).
-//
-//	@Summary     Создать/обновить резюме
-//	@Description При каждом сохранении пишется снапшот в resume_versions.
-//	@Description Ручное редактирование не затирает распарсенный source_text.
-//	@Tags        resume
-//	@Accept      json
-//	@Produce     json
-//	@Param       request body dto.ResumeInput true "резюме"
-//	@Success     200 {object} dto.Resume
-//	@Failure     400 {object} dto.ErrorResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/my/resume [put]
+// @Summary     Создать/обновить резюме
+// @Description При каждом сохранении пишется снапшот в resume_versions.
+// @Description Ручное редактирование не затирает распарсенный source_text.
+// @Tags        resume
+// @Accept      json
+// @Produce     json
+// @Param       request body dto.ResumeInput true "резюме"
+// @Success     200 {object} dto.Resume
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/my/resume [put]
 func (h *ResumeHandler) Put(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -99,12 +95,11 @@ func (h *ResumeHandler) Put(c echo.Context) error {
 	existing, err := h.resumes.GetByUserID(c.Request().Context(), userID)
 	switch {
 	case errors.Is(err, repository.ErrResumeNotFound):
-		// первое сохранение
 	case err != nil:
 		h.log.Error("get resume failed", slog.Any("err", err))
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
 	default:
-		// ручная правка не должна терять распарсенный из файла текст
+		// не затирать source_text
 		if existing.Source == "file_parse" {
 			source = existing.Source
 			sourceText = existing.SourceText
@@ -136,19 +131,17 @@ func (h *ResumeHandler) Put(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.FromResume(saved))
 }
 
-// ConfirmActivity — ответ на еженедельный опрос «подбор актуален?».
-//
-//	@Summary     Подтвердить актуальность подбора
-//	@Tags        resume
-//	@Accept      json
-//	@Produce     json
-//	@Param       request body dto.ConfirmActivityRequest true "active"
-//	@Success     200 {object} dto.Resume
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     404 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/my/resume/confirm-activity [post]
+// @Summary     Подтвердить актуальность подбора
+// @Tags        resume
+// @Accept      json
+// @Produce     json
+// @Param       request body dto.ConfirmActivityRequest true "active"
+// @Success     200 {object} dto.Resume
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     404 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/my/resume/confirm-activity [post]
 func (h *ResumeHandler) ConfirmActivity(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -174,22 +167,20 @@ func (h *ResumeHandler) ConfirmActivity(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.FromResume(resume))
 }
 
-// Parse структурирует текст резюме (извлечённый на фронте из PDF) в черновик через AI.
-//
-//	@Summary     Распарсить текст резюме
-//	@Description Принимает текст резюме, AI извлекает поля по нашей схеме.
-//	@Description Создаёт черновик (source=file_parse, is_active=false, source_text сохранён).
-//	@Description Если AI недоступен — черновик только с текстом, поля пустые.
-//	@Tags        resume
-//	@Accept      json
-//	@Produce     json
-//	@Param       request body dto.ParseResumeRequest true "текст резюме"
-//	@Success     200 {object} dto.ParseResumeResponse
-//	@Failure     400 {object} dto.ErrorResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/my/resume/parse [post]
+// @Summary     Распарсить текст резюме
+// @Description Принимает текст резюме, AI извлекает поля по нашей схеме.
+// @Description Создаёт черновик (source=file_parse, is_active=false, source_text сохранён).
+// @Description Если AI недоступен — черновик только с текстом, поля пустые.
+// @Tags        resume
+// @Accept      json
+// @Produce     json
+// @Param       request body dto.ParseResumeRequest true "текст резюме"
+// @Success     200 {object} dto.ParseResumeResponse
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/my/resume/parse [post]
 func (h *ResumeHandler) Parse(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -234,15 +225,12 @@ func (h *ResumeHandler) Parse(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal error")
 	}
 
-	// AI-распознавание уходит в фон: вебвью MAX обрывает запросы длиннее
-	// ~60 секунд (URLSession), ждать внутри HTTP-запроса нельзя.
+	// MAX рвёт запросы >60s
 	go h.processParsedResume(userID, text, saved, existing)
 
 	return c.JSON(http.StatusAccepted, dto.ParseStartResponse{Status: "processing"})
 }
 
-// processParsedResume распознаёт текст резюме через AI и обновляет
-// черновик. Статус: processing → done | failed (виден фронту).
 func (h *ResumeHandler) processParsedResume(userID int64, text string, saved repository.Resume, existing repository.Resume) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -289,7 +277,6 @@ func (h *ResumeHandler) processParsedResume(userID int64, text string, saved rep
 	}
 }
 
-// extractPDFText сервер-сайд извлечение текста из PDF (Go, без браузера).
 func extractPDFText(path string) (string, error) {
 	_, r, err := ledongthucpdf.Open(path)
 	if err != nil {
@@ -317,20 +304,17 @@ func extractPDFText(path string) (string, error) {
 	return b.String(), nil
 }
 
-// ParseFile — загрузка PDF-файла и фоновый AI-парсинг (текст извлекается
-// на сервере, вебвью не участвует).
-//
-//	@Summary     Загрузить PDF-резюме
-//	@Tags        resume
-//	@Accept      multipart/form-data
-//	@Produce     json
-//	@Param       file formData file true "PDF-файл резюме (до 10 МБ)"
-//	@Success     202 {object} dto.ParseStartResponse
-//	@Failure     400 {object} dto.ErrorResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     422 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/my/resume/parse-file [post]
+// @Summary     Загрузить PDF-резюме
+// @Tags        resume
+// @Accept      multipart/form-data
+// @Produce     json
+// @Param       file formData file true "PDF-файл резюме (до 10 МБ)"
+// @Success     202 {object} dto.ParseStartResponse
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     422 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/my/resume/parse-file [post]
 func (h *ResumeHandler) ParseFile(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {

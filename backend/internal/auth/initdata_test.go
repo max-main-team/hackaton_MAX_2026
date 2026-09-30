@@ -7,8 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// known-answer: хеш посчитан независимо (python hmac) для
-// botToken="test-bot-token" и launch_params, полученных из initData ниже.
+// hesh посчитан в python
 const testBotToken = "test-bot-token"
 
 const validInitData = "auth_date=1771409719&query_id=4c0ab423&user=%7B%22id%22%3A7%7D&hash=ac715c94969e7b3214b610ffe16202714f265c10dbe358cdaa3a42c2166be7b1"

@@ -25,19 +25,17 @@ func NewCompanyHandler(companies *repository.CompanyRepo, vacancies *repository.
 	return &CompanyHandler{companies: companies, vacancies: vacancies, log: log}
 }
 
-// Create создаёт компанию и добавляет создателя участником с выбранной позицией.
-//
-//	@Summary     Создать компанию
-//	@Tags        company
-//	@Accept      json
-//	@Produce     json
-//	@Param       request body dto.CompanyInput true "компания + позиция создателя"
-//	@Success     200 {object} dto.Company
-//	@Failure     400 {object} dto.ErrorResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/companies [post]
+// @Summary     Создать компанию
+// @Tags        company
+// @Accept      json
+// @Produce     json
+// @Param       request body dto.CompanyInput true "компания + позиция создателя"
+// @Success     200 {object} dto.Company
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/companies [post]
 func (h *CompanyHandler) Create(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -71,16 +69,14 @@ func (h *CompanyHandler) Create(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.FromCompany(saved))
 }
 
-// ListMine возвращает компании текущего пользователя.
-//
-//	@Summary     Мои компании
-//	@Tags        company
-//	@Produce     json
-//	@Success     200 {array} dto.Company
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/my/companies [get]
+// @Summary     Мои компании
+// @Tags        company
+// @Produce     json
+// @Success     200 {array} dto.Company
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/my/companies [get]
 func (h *CompanyHandler) ListMine(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -103,21 +99,19 @@ func (h *CompanyHandler) ListMine(c echo.Context) error {
 	return c.JSON(http.StatusOK, out)
 }
 
-// VacancyCreate создаёт вакансию в компании (только участник компании).
-//
-//	@Summary     Создать вакансию
-//	@Tags        vacancy
-//	@Accept      json
-//	@Produce     json
-//	@Param       id     path integer true "ID компании"
-//	@Param       request body dto.VacancyInput true "вакансия"
-//	@Success     200 {object} dto.Vacancy
-//	@Failure     400 {object} dto.ErrorResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     403 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/companies/{id}/vacancies [post]
+// @Summary     Создать вакансию
+// @Tags        vacancy
+// @Accept      json
+// @Produce     json
+// @Param       id     path integer true "ID компании"
+// @Param       request body dto.VacancyInput true "вакансия"
+// @Success     200 {object} dto.Vacancy
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     403 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/companies/{id}/vacancies [post]
 func (h *CompanyHandler) VacancyCreate(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -168,18 +162,16 @@ func (h *CompanyHandler) VacancyCreate(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.FromVacancy(saved))
 }
 
-// VacancyList возвращает вакансии компании (только участник компании).
-//
-//	@Summary     Вакансии компании
-//	@Tags        vacancy
-//	@Produce     json
-//	@Param       id path integer true "ID компании"
-//	@Success     200 {array} dto.Vacancy
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     403 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/companies/{id}/vacancies [get]
+// @Summary     Вакансии компании
+// @Tags        vacancy
+// @Produce     json
+// @Param       id path integer true "ID компании"
+// @Success     200 {array} dto.Vacancy
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     403 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/companies/{id}/vacancies [get]
 func (h *CompanyHandler) VacancyList(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -216,22 +208,20 @@ func (h *CompanyHandler) VacancyList(c echo.Context) error {
 	return c.JSON(http.StatusOK, out)
 }
 
-// Verify верифицирует компанию по токену её бота в MAX.
-//
-//	@Summary     Верифицировать компанию
-//	@Description Проверяет токен бота через GET /me платформы MAX и помечает компанию верифицированной.
-//	@Tags        company
-//	@Accept      json
-//	@Produce     json
-//	@Param       id     path integer true "ID компании"
-//	@Param       request body dto.VerifyRequest true "токен бота"
-//	@Success     200 {object} dto.Company
-//	@Failure     400 {object} dto.ErrorResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     403 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/companies/{id}/verify [post]
+// @Summary     Верифицировать компанию
+// @Description Проверяет токен бота через GET /me платформы MAX и помечает компанию верифицированной.
+// @Tags        company
+// @Accept      json
+// @Produce     json
+// @Param       id     path integer true "ID компании"
+// @Param       request body dto.VerifyRequest true "токен бота"
+// @Success     200 {object} dto.Company
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     403 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/companies/{id}/verify [post]
 func (h *CompanyHandler) Verify(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {

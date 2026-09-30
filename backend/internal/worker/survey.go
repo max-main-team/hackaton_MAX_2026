@@ -1,4 +1,3 @@
-// Package worker — фоновые задачи бекенда.
 package worker
 
 import (
@@ -31,7 +30,6 @@ func NewSurveyWorker(pool *pgxpool.Pool, botToken string, log *slog.Logger) *Sur
 	return &SurveyWorker{pool: pool, botToken: botToken, log: log, interval: time.Hour}
 }
 
-// Start запускает воркер горутиной; без MAX_BOT_TOKEN — не стартует.
 func (w *SurveyWorker) Start(ctx context.Context) {
 	if w.botToken == "" {
 		w.log.Warn("survey worker disabled: MAX_BOT_TOKEN is empty")

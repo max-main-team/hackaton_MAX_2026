@@ -23,22 +23,20 @@ func NewVacancyHandler(companies *repository.CompanyRepo, vacancies *repository.
 	return &VacancyHandler{companies: companies, vacancies: vacancies, log: log}
 }
 
-// Update частично обновляет вакансию: TTL, минимальный опыт, активность.
-//
-//	@Summary     Обновить вакансию
-//	@Tags        vacancy
-//	@Accept      json
-//	@Produce     json
-//	@Param       id     path integer true "ID вакансии"
-//	@Param       request body dto.VacancyUpdate true "изменяемые поля"
-//	@Success     200 {object} dto.Vacancy
-//	@Failure     400 {object} dto.ErrorResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     403 {object} dto.ErrorResponse
-//	@Failure     404 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/vacancies/{id} [patch]
+// @Summary     Обновить вакансию
+// @Tags        vacancy
+// @Accept      json
+// @Produce     json
+// @Param       id     path integer true "ID вакансии"
+// @Param       request body dto.VacancyUpdate true "изменяемые поля"
+// @Success     200 {object} dto.Vacancy
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     403 {object} dto.ErrorResponse
+// @Failure     404 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/vacancies/{id} [patch]
 func (h *VacancyHandler) Update(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -101,16 +99,14 @@ func (h *VacancyHandler) Update(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.FromVacancy(saved))
 }
 
-// Map — активные вакансии с координатами.
-//
-//	@Summary     Вакансии на карте
-//	@Tags        vacancy
-//	@Produce     json
-//	@Success     200 {array} dto.MapVacancy
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/vacancies/map [get]
+// @Summary     Вакансии на карте
+// @Tags        vacancy
+// @Produce     json
+// @Success     200 {array} dto.MapVacancy
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/vacancies/map [get]
 func (h *VacancyHandler) Map(c echo.Context) error {
 	items, err := h.vacancies.MapVacancies(c.Request().Context())
 	if err != nil {

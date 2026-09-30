@@ -16,7 +16,6 @@ import (
 
 const updatesURL = apiBaseURL + "/updates"
 
-// BotWorker тянет события MAX и отвечает на команды/колбэки.
 type BotWorker struct {
 	pool     *pgxpool.Pool
 	botToken string
@@ -34,7 +33,6 @@ func NewBotWorker(pool *pgxpool.Pool, botToken string, log *slog.Logger) *BotWor
 	}
 }
 
-// Start запускает long polling событий бота; без MAX_BOT_TOKEN — не стартует.
 func (w *BotWorker) Start(ctx context.Context) {
 	if w.botToken == "" {
 		w.log.Warn("bot worker disabled: MAX_BOT_TOKEN is empty")
@@ -168,7 +166,6 @@ func (w *BotWorker) poll(ctx context.Context) error {
 	for _, u := range parsed.Updates {
 		switch u.UpdateType {
 		case "bot_started":
-			// нажатие «Начать» — приветствуем юзера в его диалоге с ботом
 			if uid := u.Payload.User.ID; uid != 0 {
 				if err := w.sendMessageToUser(ctx, uid, greetingMessage()); err != nil {
 					w.log.Error("bot_started greeting failed", slog.Int64("user_id", uid), slog.Any("err", err))
@@ -177,7 +174,6 @@ func (w *BotWorker) poll(ctx context.Context) error {
 				}
 			}
 		case "message_created":
-			// отвечаем только на свежие сообщения, чтобы не спамить при рестартах
 			if ts := u.Payload.Message.Timestamp; ts > 0 {
 				var msgTime time.Time
 				if ts > 1_000_000_000_000 {
@@ -215,7 +211,6 @@ type botUserStatus struct {
 	InviteUsed   int
 }
 
-// handleMessage роутит текст сообщения юзера на нужный ответ.
 func (w *BotWorker) handleMessage(ctx context.Context, chatID, userID int64, text string) {
 	if err := w.replyCommand(ctx, chatID, userID, text); err != nil {
 		w.log.Error("bot reply failed", slog.Int64("chat_id", chatID), slog.Any("err", err))
@@ -259,7 +254,6 @@ func (w *BotWorker) replyCommand(ctx context.Context, chatID, userID int64, text
 	return w.sendMessage(ctx, fmt.Sprintf("chat_id=%d", chatID), msg)
 }
 
-// fetchUserStatus собирает данные юзера для ответа /status.
 func (w *BotWorker) fetchUserStatus(ctx context.Context, userID int64) botUserStatus {
 	var s botUserStatus
 	err := w.pool.QueryRow(ctx, `
@@ -358,7 +352,6 @@ func greetingMessage() map[string]any {
 	return keyboardMessage("Привет! 👋\n\nЯ помогаю находить работу по-новому: компании сами ищут тебя.\n\nЗаполни резюме в мини-приложении — и получай приглашения от компаний СПб.")
 }
 
-// sendMessageToUser начинает диалог с пользователем по его ID из MAX.
 func (w *BotWorker) sendMessageToUser(ctx context.Context, userID int64, message map[string]any) error {
 	return w.sendMessage(ctx, fmt.Sprintf("user_id=%d", userID), message)
 }

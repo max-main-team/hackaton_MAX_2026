@@ -138,7 +138,6 @@ export default function ResumeScreen() {
 
     setStage('extracting')
 
-    // 1) сервер-сайд: файл уходит на бекенд, текст извлекается там
     let serverAccepted = false
     try {
       await parseFile(file)
@@ -154,10 +153,8 @@ export default function ResumeScreen() {
         setError('Файл больше 10 МБ')
         return
       }
-      // остальное (нет текстового слоя и т.п.) → пробуем в браузере
     }
 
-    // 2) фолбэк: клиентский pdfjs (legacy)
     if (!serverAccepted) {
       let text = ''
       try {
@@ -187,7 +184,7 @@ export default function ResumeScreen() {
       }
     }
 
-    // 3) AI в фоне — поллинг статуса до 6 минут
+    // AI считает в фоне
     for (let i = 0; i < 90; i++) {
       await new Promise(r => setTimeout(r, 4000))
       const r = await getResume()

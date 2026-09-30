@@ -28,7 +28,6 @@ func NewScoreRepo(pool *pgxpool.Pool) *ScoreRepo {
 	return &ScoreRepo{pool: pool}
 }
 
-// GetScore возвращает закешированную оценку или nil.
 func (r *ScoreRepo) GetScore(ctx context.Context, resumeID, vacancyID int64) (*ResumeScore, error) {
 	var s ResumeScore
 	err := r.pool.QueryRow(ctx, `
@@ -48,7 +47,6 @@ func (r *ScoreRepo) GetScore(ctx context.Context, resumeID, vacancyID int64) (*R
 	return &s, nil
 }
 
-// UpsertScore создаёт или обновляет кеш оценки.
 func (r *ScoreRepo) UpsertScore(ctx context.Context, s ResumeScore) error {
 	_, err := r.pool.Exec(ctx, `
 		INSERT INTO resume_scores (resume_id, vacancy_id, algo_score, ai_score, ai_comment, ai_model, updated_at)

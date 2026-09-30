@@ -112,7 +112,6 @@ func (r *VacancyRepo) GetByID(ctx context.Context, id int64) (Vacancy, error) {
 	return saved, nil
 }
 
-// Update частично обновляет вакансию: nil-аргументы не меняются.
 func (r *VacancyRepo) Update(ctx context.Context, id int64, in VacancyUpdate) (Vacancy, error) {
 	saved, err := scanVacancy(r.pool.QueryRow(ctx, `
 		UPDATE vacancies SET
@@ -178,7 +177,6 @@ type MapVacancy struct {
 	SalaryMax   *int    `json:"salary_max"`
 }
 
-// MapVacancies — активные вакансии с координатами для карты.
 func (r *VacancyRepo) MapVacancies(ctx context.Context) ([]MapVacancy, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT v.id, v.title, c.name, c.verified, v.city, v.lat, v.lng,

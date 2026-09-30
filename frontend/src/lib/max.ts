@@ -1,9 +1,4 @@
-/**
- * Типы MAX Bridge — window.WebApp (https://dev.max.ru/docs/webapps/bridge).
- * Выжимка: docs/max/bridge.md.
- * Инициализация не требуется: объект создаётся клиентом MAX при запуске.
- * Вне MAX объект отсутствует — всегда проверяйте getWebApp() !== null.
- */
+// Типы MAX Bridge
 
 export interface MaxUser {
   id: number
@@ -15,9 +10,9 @@ export interface MaxUser {
 }
 
 export interface MaxWebApp {
-  /** Подписанная строка initData для валидации на бэкенде */
+  /** подписанная строка initData */
   initData: string
-  /** Данные из initData в виде объекта. Для валидации непригоден */
+  /** распарсенные данные initData */
   initDataUnsafe: {
     query_id?: string
     ip?: string
@@ -74,23 +69,22 @@ export function getWebApp(): MaxWebApp | null {
   return (window as unknown as { WebApp?: MaxWebApp }).WebApp ?? null
 }
 
-/** true, если мини-приложение открыто внутри MAX */
+/** открыт ли внутри MAX */
 export function isInsideMax(): boolean {
   return getWebApp() !== null
 }
 
-/** initData для POST /auth (пустая строка вне MAX) */
+/** initData для POST /auth */
 export function getInitData(): string {
   return getWebApp()?.initData ?? ''
 }
 
-/** Безопасный вызов метода Bridge: метод может отсутствовать в версии клиента */
+/** безопасный вызов Bridge */
 export function callBridge(fn: (app: MaxWebApp) => void): void {
   const app = getWebApp()
   if (!app) return
   try {
     fn(app)
   } catch {
-    /* Bridge не поддерживает метод в этой версии клиента */
   }
 }

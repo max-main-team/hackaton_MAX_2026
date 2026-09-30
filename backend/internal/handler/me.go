@@ -28,16 +28,14 @@ func NewMeHandler(users *repository.UserRepo, companies *repository.CompanyRepo,
 	return &MeHandler{users: users, companies: companies, log: log}
 }
 
-// Me возвращает текущего пользователя и статус согласия на обработку ПДн.
-//
-//	@Summary     Текущий пользователь
-//	@Tags        profile
-//	@Produce     json
-//	@Success     200 {object} dto.MeResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     404 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/me [get]
+// @Summary     Текущий пользователь
+// @Tags        profile
+// @Produce     json
+// @Success     200 {object} dto.MeResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     404 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/me [get]
 func (h *MeHandler) Me(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -63,16 +61,14 @@ func (h *MeHandler) Me(c echo.Context) error {
 	})
 }
 
-// Referrals — приглашённые пользователи.
-//
-//	@Summary     Мои рефералы
-//	@Tags        profile
-//	@Produce     json
-//	@Success     200 {object} referralResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/my/referrals [get]
+// @Summary     Мои рефералы
+// @Tags        profile
+// @Produce     json
+// @Success     200 {object} referralResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/my/referrals [get]
 func (h *MeHandler) Referrals(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -95,19 +91,17 @@ func (h *MeHandler) Referrals(c echo.Context) error {
 	return c.JSON(http.StatusOK, referralResponse{Count: len(items), Items: items})
 }
 
-// SetRole выбирает роль пользователя и фиксирует согласие на обработку ПДн.
-//
-//	@Summary     Выбор роли (+ согласие на обработку ПДн)
-//	@Tags        profile
-//	@Accept      json
-//	@Produce     json
-//	@Param       request body dto.RoleRequest true "роль и согласие"
-//	@Success     200 {object} dto.MeResponse
-//	@Failure     400 {object} dto.ErrorResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/me/role [post]
+// @Summary     Выбор роли (+ согласие на обработку ПДн)
+// @Tags        profile
+// @Accept      json
+// @Produce     json
+// @Param       request body dto.RoleRequest true "роль и согласие"
+// @Success     200 {object} dto.MeResponse
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/me/role [post]
 func (h *MeHandler) SetRole(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {
@@ -160,17 +154,14 @@ type companyReferralResponse struct {
 	Invited     []dto.InvitedCompany `json:"invited"`
 }
 
-// CompanyReferrals — B2B-рефералка: квота приглашений компании, промо и
-// список приглашённых компаний.
-//
-//	@Summary     Компания-реферер: квоты и приглашённые
-//	@Tags        referrals
-//	@Produce     json
-//	@Success     200 {object} companyReferralResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     404 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/my/company-referrals [get]
+// @Summary     Компания-реферер: квоты и приглашённые
+// @Tags        referrals
+// @Produce     json
+// @Success     200 {object} companyReferralResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     404 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/my/company-referrals [get]
 func (h *MeHandler) CompanyReferrals(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {

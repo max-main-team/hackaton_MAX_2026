@@ -76,8 +76,6 @@ func scanResume(row pgx.Row) (Resume, error) {
 	return r, nil
 }
 
-// UpsertResume сохраняет резюме и пишет снапшот в resume_versions
-// в одной транзакции. Матчится всегда только текущая версия.
 func (r *ResumeRepo) UpsertResume(ctx context.Context, res Resume) (Resume, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
@@ -177,8 +175,6 @@ func (r *ResumeRepo) TouchConfirmedAt(ctx context.Context, userID int64) error {
 	return nil
 }
 
-// SetConfirmActivity обрабатывает ответ на еженедельный опрос:
-// active=true — подтверждает актуальность, active=false — отключает резюме.
 func (r *ResumeRepo) SetConfirmActivity(ctx context.Context, userID int64, active bool) error {
 	_, err := r.pool.Exec(ctx, `
 		UPDATE resumes
@@ -215,7 +211,6 @@ func (r *ResumeRepo) ListVersions(ctx context.Context, userID int64) ([]ResumeVe
 	return out, rows.Err()
 }
 
-// SetParseStatus обновляет статус AI-парсинга резюме.
 func (r *ResumeRepo) SetParseStatus(ctx context.Context, userID int64, status string) error {
 	_, err := r.pool.Exec(ctx, `
 		UPDATE resumes SET parse_status = $2, updated_at = now() WHERE user_id = $1
@@ -231,7 +226,6 @@ type CandidateCard struct {
 	Resume Resume `json:"resume"`
 }
 
-// ListCandidateCards — все активные резюме кандидатов с поиском и пагинацией.
 func (r *ResumeRepo) ListCandidateCards(ctx context.Context, query string, limit, offset int) ([]CandidateCard, int, error) {
 	filter := `r.is_active AND COALESCE(u.role, '') = 'candidate'`
 	args := []any{}

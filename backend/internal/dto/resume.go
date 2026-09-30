@@ -48,7 +48,6 @@ type ResumeLink struct {
 	URL  string `json:"url" example:"https://github.com/ivan"`
 }
 
-// ValidateResumeInput проверяет перечисления и формат links.
 func ValidateResumeInput(in ResumeInput) error {
 	if in.Title == "" {
 		return fmt.Errorf("title is required")

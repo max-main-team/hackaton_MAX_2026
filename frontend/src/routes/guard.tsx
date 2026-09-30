@@ -12,7 +12,7 @@ export function homeFor(role: string | null | undefined): string {
 
 interface GuardProps {
   role?: 'candidate' | 'recruiter'
-  /** разрешить доступ без выбранной роли (нужно самому онбордингу) */
+  /** доступ без роли */
   allowNoRole?: boolean
   children: ReactNode
 }

@@ -59,8 +59,6 @@ func scanCompany(row pgx.Row) (Company, error) {
 	return c, nil
 }
 
-// Create создаёт компанию и сразу добавляет создателя участником
-// с выбранной позицией (owner/hr/employee) — в одной транзакции.
 func (r *CompanyRepo) Create(ctx context.Context, c Company, creatorUserID int64, position string) (Company, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
@@ -141,7 +139,6 @@ func (r *CompanyRepo) ListByUser(ctx context.Context, userID int64) ([]Company, 
 	return out, rows.Err()
 }
 
-// UpdateMemberPosition меняет позицию участника в компании (owner/hr/employee).
 func (r *CompanyRepo) UpdateMemberPosition(ctx context.Context, companyID, userID int64, position string) error {
 	tag, err := r.pool.Exec(ctx, `
 		UPDATE company_members SET position = $3
@@ -156,7 +153,6 @@ func (r *CompanyRepo) UpdateMemberPosition(ctx context.Context, companyID, userI
 	return nil
 }
 
-// MarkVerified помечает компанию верифицированной после проверки бота.
 func (r *CompanyRepo) MarkVerified(ctx context.Context, id int64, botUserID int64, botUsername string) (Company, error) {
 	saved, err := scanCompany(r.pool.QueryRow(ctx, `
 		UPDATE companies SET verified = TRUE, bot_user_id = $2, bot_username = $3, updated_at = now()
@@ -174,8 +170,6 @@ type InvitedCompany struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// ConsumeInvite списывает одно приглашение компании. Возвращает false,
-// если квота исчерпана.
 func (r *CompanyRepo) ConsumeInvite(ctx context.Context, companyID int64) (bool, error) {
 	tag, err := r.pool.Exec(ctx, `
 		UPDATE companies SET invite_used = invite_used + 1, updated_at = now()
@@ -187,7 +181,6 @@ func (r *CompanyRepo) ConsumeInvite(ctx context.Context, companyID int64) (bool,
 	return tag.RowsAffected() == 1, nil
 }
 
-// AddInviteQuota начисляет компании дополнительные приглашения.
 func (r *CompanyRepo) AddInviteQuota(ctx context.Context, companyID int64, delta int) error {
 	_, err := r.pool.Exec(ctx, `
 		UPDATE companies SET invite_quota = invite_quota + $2, updated_at = now()
@@ -199,7 +192,6 @@ func (r *CompanyRepo) AddInviteQuota(ctx context.Context, companyID int64, delta
 	return nil
 }
 
-// ListInvitedCompanies — компании, привлечённые указанной компанией.
 func (r *CompanyRepo) ListInvitedCompanies(ctx context.Context, companyID int64) ([]InvitedCompany, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT id, name, created_at FROM companies
@@ -222,11 +214,6 @@ func (r *CompanyRepo) ListInvitedCompanies(ctx context.Context, companyID int64)
 	return out, rows.Err()
 }
 
-// ApplyB2BAttribution привязывает реферера к созданной компании и
-// начисляет награды: приглашённая компания получает промо-статус и
-// удвоенную базу приглашений, приглашавшая — +5 приглашений.
-// Атрибуция применяется только к первой компании создателя по pending
-// ссылке; иначе pending просто очищается.
 func (r *CompanyRepo) ApplyB2BAttribution(ctx context.Context, companyID, creatorUserID int64) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {

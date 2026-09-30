@@ -20,16 +20,14 @@ type DebugLog struct {
 	Detail string `json:"detail"`
 }
 
-// Log — временная точка телеметрии клиентских ошибок (отладка вебвью MAX).
-//
-//	@Summary     Клиентская ошибка в лог
-//	@Tags        debug
-//	@Accept      json
-//	@Produce     json
-//	@Param       request body DebugLog true "куда и что упало"
-//	@Success     200 {object} map[string]string
-//	@Security    BearerAuth
-//	@Router      /api/v1/debug/log [post]
+// @Summary     Клиентская ошибка в лог
+// @Tags        debug
+// @Accept      json
+// @Produce     json
+// @Param       request body DebugLog true "куда и что упало"
+// @Success     200 {object} map[string]string
+// @Security    BearerAuth
+// @Router      /api/v1/debug/log [post]
 func (h *DebugHandler) Log(c echo.Context) error {
 	var in DebugLog
 	if err := c.Bind(&in); err != nil {

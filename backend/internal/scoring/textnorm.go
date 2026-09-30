@@ -14,7 +14,6 @@ var (
 	barePhoneRe    = regexp.MustCompile(`^\+?[\d\s()\-]{10,20}$`)
 )
 
-// NormalizeResumeText чистит текст резюме перед AI-извлечением.
 func NormalizeResumeText(s string) string {
 	s = strings.ReplaceAll(s, "\r\n", "\n")
 	s = strings.ReplaceAll(s, "\r", "\n")
@@ -64,7 +63,6 @@ func joinableHyphen(next string) bool {
 	return first >= 'a' && first <= 'z' || first >= 'а' && first <= 'я' || first == 'ё'
 }
 
-// TruncateText режет текст до max символов по границе руны.
 func TruncateText(s string, max int) string {
 	if len(s) <= max {
 		return s

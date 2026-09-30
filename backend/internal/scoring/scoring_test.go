@@ -29,7 +29,6 @@ func TestScorePartialSkills(t *testing.T) {
 
 	score, breakdown := Score(v, r)
 	assert.Equal(t, 25, breakdown.Skills)
-	// 0.5*25 + 0.2*100 + 0.2*100 + 0.1*100 = 62.5 -> 63
 	assert.Equal(t, 63, score)
 }
 
@@ -38,7 +37,6 @@ func TestScoreCityMismatch(t *testing.T) {
 	r := Resume{City: "Казань", WorkFormat: "remote"}
 
 	score, breakdown := Score(v, r)
-	// skills: нет требований -> 1.0 (50), city 0, schedule 0, experience 100 (10)
 	assert.Equal(t, 60, score)
 	assert.Equal(t, Breakdown{Skills: 100, City: 0, Schedule: 0, Experience: 100}, breakdown)
 }
@@ -48,7 +46,6 @@ func TestScoreEmptyRequirements(t *testing.T) {
 	r := Resume{City: "Москва", WorkFormat: "full_time"}
 
 	score, breakdown := Score(v, r)
-	// skills 50 + city 10 (одно поле пустое) + schedule 0 + experience 10 = 70
 	assert.Equal(t, 70, score)
 	assert.Equal(t, Breakdown{Skills: 100, City: 50, Schedule: 0, Experience: 100}, breakdown)
 }

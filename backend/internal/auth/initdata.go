@@ -1,6 +1,3 @@
-// Package auth: парсинг и проверка подписи initData (MAX Bridge) и выпуск JWT.
-// Алгоритм валидации: https://dev.max.ru/docs/webapps/validation,
-// выжимка — docs/max/init-data.md.
 package auth
 
 import (
@@ -62,8 +59,6 @@ func StartParam(raw string) string {
 	return values.Get("start_param")
 }
 
-// Verify проверяет подпись initData: подписантом выступает токен бота,
-// чьё мини-приложение запущено (см. docs/max/init-data.md).
 func Verify(rawInitData, botToken string) error {
 	values, err := url.ParseQuery(rawInitData)
 	if err != nil {

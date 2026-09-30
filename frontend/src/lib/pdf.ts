@@ -1,9 +1,7 @@
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
 import * as pdfjsWorkerModule from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs'
 
-// В вебвью MAX не работают ни модульные Worker, ни динамический import
-// воркера (fallback pdfjs) — поэтому код воркера кладётся в главный
-// поток: pdfjs использует его напрямую без создания Worker.
+// MAX-вебвью не держит воркеры
 ;(globalThis as unknown as { pdfjsWorker: unknown }).pdfjsWorker = pdfjsWorkerModule
 pdfjs.GlobalWorkerOptions.workerSrc = ''
 

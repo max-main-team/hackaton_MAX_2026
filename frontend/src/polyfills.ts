@@ -1,5 +1,4 @@
-// Полифиллы для старых вебвью (MAX на iOS/Android).
-// Подключается раньше всех в main.tsx.
+// полифиллы старых вебвью
 
 interface WithResolvers<T> {
   promise: Promise<T>

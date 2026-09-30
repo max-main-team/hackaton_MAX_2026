@@ -52,8 +52,6 @@ type chatResponse struct {
 	} `json:"choices"`
 }
 
-// chat — один запрос к OpenAI-совместимому /chat/completions,
-// возвращает очищенный текст ответа модели.
 func (c *AIClient) chat(ctx context.Context, system, user string) (string, error) {
 	reqBody, err := json.Marshal(chatRequest{
 		Model: c.model,
@@ -97,7 +95,6 @@ func (c *AIClient) chat(ctx context.Context, system, user string) (string, error
 	return content, nil
 }
 
-// ScoreAI оценивает соответствие резюме вакансии через LLM.
 func (c *AIClient) ScoreAI(ctx context.Context, vacancy, resume any) (AIResult, error) {
 	content, err := c.chat(ctx,
 		"Ты — HR-аналитик. Оцени соответствие резюме вакансии. Верни СТРОГО валидный JSON без markdown: {\"score\": 0-100, \"comment\": \"краткое обоснование на русском\"}.",
@@ -150,7 +147,6 @@ type ResumeDraft struct {
 	Notes            string `json:"notes"`
 }
 
-// ExtractResume структурирует текст резюме в черновик через LLM.
 func (c *AIClient) ExtractResume(ctx context.Context, text string) (ResumeDraft, error) {
 	if !c.Enabled() {
 		return ResumeDraft{}, fmt.Errorf("AI is not configured")
@@ -196,7 +192,6 @@ var employmentTypeAliases = map[string]string{
 	"интерн": "internship", "internship": "internship",
 }
 
-// NormalizeResumeDraft приводит ответ LLM к нашим enum'ам и границам.
 func NormalizeResumeDraft(d ResumeDraft) ResumeDraft {
 	d.Title = strings.TrimSpace(d.Title)
 	d.Skills = normalizeSkills(d.Skills)

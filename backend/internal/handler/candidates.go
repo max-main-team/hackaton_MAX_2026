@@ -23,23 +23,20 @@ func NewCandidatesHandler(resumes *repository.ResumeRepo, users *repository.User
 	return &CandidatesHandler{resumes: resumes, users: users, log: log}
 }
 
-// AllCandidates отдаёт компании все активные резюме кандидатов —
-// без привязки к вакансии и скорингу.
-//
-//	@Summary     Все кандидаты (для компаний)
-//	@Description Активные резюме всех кандидатов, поиск по title/skills/city,
-//	@Description пагинация limit/offset. Роль рекрутера обязательна.
-//	@Tags        matching
-//	@Produce     json
-//	@Param       q      query string  false "подстрока в title/skills/city"
-//	@Param       limit  query integer false "20"
-//	@Param       offset query integer false "0"
-//	@Success     200 {object} dto.AllCandidatesResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     403 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Security    BearerAuth
-//	@Router      /api/v1/candidates [get]
+// @Summary     Все кандидаты (для компаний)
+// @Description Активные резюме всех кандидатов, поиск по title/skills/city,
+// @Description пагинация limit/offset. Роль рекрутера обязательна.
+// @Tags        matching
+// @Produce     json
+// @Param       q      query string  false "подстрока в title/skills/city"
+// @Param       limit  query integer false "20"
+// @Param       offset query integer false "0"
+// @Success     200 {object} dto.AllCandidatesResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     403 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Security    BearerAuth
+// @Router      /api/v1/candidates [get]
 func (h *CandidatesHandler) AllCandidates(c echo.Context) error {
 	userID, err := middleware.UserIDFromContext(c)
 	if err != nil {

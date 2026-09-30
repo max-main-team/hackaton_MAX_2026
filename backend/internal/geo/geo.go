@@ -20,7 +20,6 @@ var cities = map[string]Coords{
 	"краснодар":        {Lat: 45.0355, Lng: 38.9753},
 }
 
-// Lookup возвращает координаты центра города или false, если город неизвестен.
 func Lookup(city string) (Coords, bool) {
 	c, ok := cities[strings.ToLower(strings.TrimSpace(city))]
 	return c, ok

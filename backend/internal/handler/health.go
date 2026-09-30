@@ -21,14 +21,12 @@ func NewHealthHandler(pool *pgxpool.Pool, log *slog.Logger) *HealthHandler {
 	return &HealthHandler{pool: pool, log: log}
 }
 
-// Health — живость сервиса и БД.
-//
-//	@Summary     Здоровье сервиса
-//	@Tags        system
-//	@Produce     json
-//	@Success     200 {object} dto.HealthResponse
-//	@Failure     503 {object} dto.HealthResponse
-//	@Router      /api/v1/health [get]
+// @Summary     Здоровье сервиса
+// @Tags        system
+// @Produce     json
+// @Success     200 {object} dto.HealthResponse
+// @Failure     503 {object} dto.HealthResponse
+// @Router      /api/v1/health [get]
 func (h *HealthHandler) Health(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 2*time.Second)
 	defer cancel()

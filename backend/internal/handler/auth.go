@@ -28,20 +28,18 @@ func NewAuthHandler(users *repository.UserRepo, cfg *config.Config, log *slog.Lo
 	return &AuthHandler{users: users, cfg: cfg, log: log}
 }
 
-// Auth авторизует пользователя мини-приложения по initData из MAX Bridge.
-//
-//	@Summary     Авторизация по initData
-//	@Description Принимает window.WebApp.initData, проверяет подпись (токен бота),
-//	@Description  срок давности, апсертит пользователя и выдаёт JWT (7 дней).
-//	@Tags        auth
-//	@Accept      json
-//	@Produce     json
-//	@Param       request body dto.AuthRequest true "initData из MAX Bridge"
-//	@Success     200 {object} dto.AuthResponse
-//	@Failure     400 {object} dto.ErrorResponse
-//	@Failure     401 {object} dto.ErrorResponse
-//	@Failure     500 {object} dto.ErrorResponse
-//	@Router      /api/v1/auth [post]
+// @Summary     Авторизация по initData
+// @Description Принимает window.WebApp.initData, проверяет подпись (токен бота),
+// @Description  срок давности, апсертит пользователя и выдаёт JWT (7 дней).
+// @Tags        auth
+// @Accept      json
+// @Produce     json
+// @Param       request body dto.AuthRequest true "initData из MAX Bridge"
+// @Success     200 {object} dto.AuthResponse
+// @Failure     400 {object} dto.ErrorResponse
+// @Failure     401 {object} dto.ErrorResponse
+// @Failure     500 {object} dto.ErrorResponse
+// @Router      /api/v1/auth [post]
 func (h *AuthHandler) Auth(c echo.Context) error {
 	var req dto.AuthRequest
 	if err := c.Bind(&req); err != nil {
@@ -108,23 +106,20 @@ func (h *AuthHandler) Auth(c echo.Context) error {
 	})
 }
 
-// DemoAuth выдаёт JWT без MAX — только для разработки и тестов UI в браузере.
-//
-//	@Summary     Демо-вход (только dev)
-//	@Description Создаёт/возвращает тестового пользователя и JWT. В prod отключён.
-//	@Tags        auth
-//	@Accept      json
-//	@Produce     json
-//	@Param       request body dto.DemoAuthRequest false "параметры тестового пользователя"
-//	@Success     200 {object} dto.AuthResponse
-//	@Failure     403 {object} dto.ErrorResponse
-//	@Router      /api/v1/auth/demo [post]
+// @Summary     Демо-вход (только dev)
+// @Description Создаёт/возвращает тестового пользователя и JWT. В prod отключён.
+// @Tags        auth
+// @Accept      json
+// @Produce     json
+// @Param       request body dto.DemoAuthRequest false "параметры тестового пользователя"
+// @Success     200 {object} dto.AuthResponse
+// @Failure     403 {object} dto.ErrorResponse
+// @Router      /api/v1/auth/demo [post]
 func (h *AuthHandler) DemoAuth(c echo.Context) error {
 	var req dto.DemoAuthRequest
 	_ = c.Bind(&req)
 
-	// Хакатон: демо-вход открыт и на проде, но создаёт только тестовых
-	// пользователей в диапазоне 700000000–799999999.
+	// только тестовые 700000000–799999999
 	if req.UserID != 0 && (req.UserID < 700000000 || req.UserID > 799999999) {
 		req.UserID = 0
 	}

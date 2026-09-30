@@ -49,7 +49,6 @@ func NewMatchingRepo(pool *pgxpool.Pool) *MatchingRepo {
 	return &MatchingRepo{pool: pool}
 }
 
-// GetOrCreateAction возвращает действие рекрутера; при первом вызове создаёт.
 func (r *MatchingRepo) GetOrCreateAction(ctx context.Context, vacancyID, recruiterUserID, candidateUserID int64, action string) (RecruiterAction, error) {
 	var out RecruiterAction
 	err := r.pool.QueryRow(ctx, `
@@ -75,7 +74,6 @@ func (r *MatchingRepo) GetOrCreateAction(ctx context.Context, vacancyID, recruit
 	return out, nil
 }
 
-// HasActionForVacancy — есть ли уже какое-либо действие по паре (вакансия, кандидат).
 func (r *MatchingRepo) HasActionForVacancy(ctx context.Context, vacancyID, candidateUserID int64) (bool, error) {
 	var ok bool
 	err := r.pool.QueryRow(ctx, `
@@ -87,7 +85,6 @@ func (r *MatchingRepo) HasActionForVacancy(ctx context.Context, vacancyID, candi
 	return ok, nil
 }
 
-// GetInvitationDetail возвращает приглашение со всеми связанными данными.
 func (r *MatchingRepo) GetInvitationDetail(ctx context.Context, actionID int64) (InvitationDetail, error) {
 	var d InvitationDetail
 	err := r.pool.QueryRow(ctx, `
@@ -116,7 +113,6 @@ func (r *MatchingRepo) GetInvitationDetail(ctx context.Context, actionID int64) 
 	return d, nil
 }
 
-// ListInvitationsByCandidate — все приглашения кандидата.
 func (r *MatchingRepo) ListInvitationsByCandidate(ctx context.Context, candidateUserID int64) ([]InvitationDetail, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT ra.id, ra.recruiter_user_id, ra.candidate_user_id, COALESCE(u.username, ''),
@@ -152,7 +148,6 @@ func (r *MatchingRepo) ListInvitationsByCandidate(ctx context.Context, candidate
 	return out, rows.Err()
 }
 
-// CreateResponse сохраняет ответ кандидата на приглашение.
 func (r *MatchingRepo) CreateResponse(ctx context.Context, actionID int64, response string) error {
 	_, err := r.pool.Exec(ctx, `
 		INSERT INTO candidate_responses (action_id, response)
