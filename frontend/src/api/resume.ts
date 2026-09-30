@@ -29,5 +29,5 @@ export function parseFile(file: File): Promise<{ status: string }> {
   return request<{ status: string }>('/my/resume/parse-file', {
     method: 'POST',
     body,
-  })
+  }, 120_000)
 }

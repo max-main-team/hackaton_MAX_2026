@@ -23,6 +23,24 @@ const EMPTY_FORM: ResumeInput = {
 }
 
 const MAX_PDF_BYTES = 25 * 1024 * 1024
+const LOCAL_EXTRACT_TIMEOUT_MS = 60_000
+const PARSE_POLL_TIMEOUT_MS = 3 * 60_000
+
+function wait(ms: number): Promise<void> {
+  return new Promise(resolve => window.setTimeout(resolve, ms))
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timer = 0
+  const timeout = new Promise<never>((_, reject) => {
+    timer = window.setTimeout(() => reject(new Error('Операция заняла слишком много времени')), timeoutMs)
+  })
+  try {
+    return await Promise.race([promise, timeout])
+  } finally {
+    window.clearTimeout(timer)
+  }
+}
 
 function parseLinks(raw: string | ResumeLink[] | null | undefined): ResumeLink[] {
   if (Array.isArray(raw)) return raw
@@ -152,9 +170,9 @@ export default function ResumeScreen() {
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ where: 'resume-parse-file', detail }),
       }).catch(() => {})
-      if (e instanceof ApiError && e.status === 400 && /larger than 10/i.test(e.message)) {
+      if (e instanceof ApiError && e.status === 400 && /larger than 25/i.test(e.message)) {
         setStage('idle')
-        setError('Файл больше 10 МБ')
+        setError('Файл больше 25 МБ')
         return
       }
     }
@@ -164,7 +182,7 @@ export default function ResumeScreen() {
       let text = ''
       try {
         const { extractPdfText } = await import('../../lib/pdf')
-        text = await extractPdfText(file)
+        text = await withTimeout(extractPdfText(file), LOCAL_EXTRACT_TIMEOUT_MS)
       } catch (e) {
         const detail = e instanceof Error ? `${e.name}: ${e.message}` : String(e)
         void fetch('/api/v1/debug/log', {
@@ -195,8 +213,9 @@ export default function ResumeScreen() {
     setStage('parsing')
 
     // AI считает в фоне
-    for (let i = 0; i < 90; i++) {
-      await new Promise(r => setTimeout(r, 4000))
+    const pollDeadline = Date.now() + PARSE_POLL_TIMEOUT_MS
+    while (Date.now() < pollDeadline) {
+      await wait(Math.min(4000, pollDeadline - Date.now()))
       let r: Resume
       try {
         r = await getResume()
@@ -260,7 +279,8 @@ export default function ResumeScreen() {
           type="file"
           accept=".pdf,application/pdf"
           onChange={(e) => {
-            const file = e.target.files?.[0]
+            const file = e.currentTarget.files?.[0]
+            e.currentTarget.value = ''
             if (file) void uploadPdf(file)
           }}
           disabled={stage !== 'idle'}
