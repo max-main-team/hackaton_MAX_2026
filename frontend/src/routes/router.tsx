@@ -13,6 +13,7 @@ import VacancyNew from './recruiter/vacancy-new'
 import VacancyEdit from './recruiter/vacancy-edit'
 import Feed from './recruiter/feed'
 import CandidateList from './recruiter/candidate-list'
+import AllCandidates from './recruiter/all-candidates'
 import MapScreen from './map'
 
 export const router = createBrowserRouter([
@@ -82,6 +83,14 @@ export const router = createBrowserRouter([
     element: (
       <Guard role="recruiter">
         <VacanciesScreen />
+      </Guard>
+    ),
+  },
+  {
+    path: '/company/candidates',
+    element: (
+      <Guard role="recruiter">
+        <AllCandidates />
       </Guard>
     ),
   },

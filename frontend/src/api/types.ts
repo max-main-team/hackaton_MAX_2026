@@ -138,6 +138,16 @@ export interface CandidatesResponse {
   items: CandidateItem[]
 }
 
+export interface CandidateCard {
+  user: User
+  resume: Resume
+}
+
+export interface AllCandidatesResponse {
+  total: number
+  items: CandidateCard[]
+}
+
 export interface RecruiterActionResponse {
   id: number
   action: string

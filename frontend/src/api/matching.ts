@@ -1,5 +1,6 @@
 import { request } from './client'
 import type {
+  AllCandidatesResponse,
   CandidatesResponse,
   Invitation,
   MatchResult,
@@ -14,6 +15,12 @@ export function candidates(
 ): Promise<CandidatesResponse> {
   const qs = new URLSearchParams({ mode, limit: String(limit), offset: String(offset) })
   return request<CandidatesResponse>(`/vacancies/${vacancyId}/candidates?${qs}`)
+}
+
+export function allCandidates(q = '', limit = 20, offset = 0): Promise<AllCandidatesResponse> {
+  const qs = new URLSearchParams({ limit: String(limit), offset: String(offset) })
+  if (q.trim()) qs.set('q', q.trim())
+  return request<AllCandidatesResponse>(`/candidates?${qs}`)
 }
 
 export function candidateAction(

@@ -18,3 +18,13 @@ type CandidatesResponse struct {
 	Total int             `json:"total"`
 	Items []CandidateItem `json:"items"`
 }
+
+type CandidateCard struct {
+	User   User   `json:"user"`
+	Resume Resume `json:"resume"`
+}
+
+type AllCandidatesResponse struct {
+	Total int             `json:"total"`
+	Items []CandidateCard `json:"items"`
+}

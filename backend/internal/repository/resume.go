@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -223,4 +224,62 @@ func (r *ResumeRepo) SetParseStatus(ctx context.Context, userID int64, status st
 		return fmt.Errorf("set parse status: %w", err)
 	}
 	return nil
+}
+
+type CandidateCard struct {
+	User   User   `json:"user"`
+	Resume Resume `json:"resume"`
+}
+
+// ListCandidateCards — все активные резюме кандидатов с поиском и пагинацией.
+func (r *ResumeRepo) ListCandidateCards(ctx context.Context, query string, limit, offset int) ([]CandidateCard, int, error) {
+	filter := `r.is_active AND COALESCE(u.role, '') = 'candidate'`
+	args := []any{}
+	if query != "" {
+		filter += ` AND (r.title ILIKE $1 OR r.skills ILIKE $1 OR r.city ILIKE $1)`
+		args = append(args, "%"+query+"%")
+	}
+	args = append(args, limit, offset)
+
+	rows, err := r.pool.Query(ctx, `
+		SELECT count(*) OVER () AS total,
+		       u.id, u.username, u.first_name, u.last_name, u.photo_url, u.language_code,
+		       COALESCE(u.role, '') AS role, u.created_at, u.updated_at,
+		       r.id, r.user_id, r.title, r.skills, r.experience_months, r.about, r.education, r.links,
+		       r.city, r.work_format, r.employment_type, r.salary_min, r.salary_max,
+		       r.source, r.source_text, r.parse_status, r.is_active, r.last_confirmed_at, r.created_at, r.updated_at
+		FROM resumes r
+		JOIN users u ON u.id = r.user_id
+		WHERE `+filter+`
+		ORDER BY r.updated_at DESC
+		LIMIT $`+strconv.Itoa(len(args)-1)+` OFFSET $`+strconv.Itoa(len(args))+`
+	`, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list candidate cards: %w", err)
+	}
+	defer rows.Close()
+
+	var out []CandidateCard
+	total := 0
+	for rows.Next() {
+		var card CandidateCard
+		var links []byte
+		if err := rows.Scan(
+			&total,
+			&card.User.ID, &card.User.Username, &card.User.FirstName, &card.User.LastName,
+			&card.User.PhotoURL, &card.User.LanguageCode, &card.User.Role,
+			&card.User.CreatedAt, &card.User.UpdatedAt,
+			&card.Resume.ID, &card.Resume.UserID, &card.Resume.Title, &card.Resume.Skills,
+			&card.Resume.ExperienceMonths, &card.Resume.About, &card.Resume.Education,
+			&links, &card.Resume.City, &card.Resume.WorkFormat, &card.Resume.EmploymentType,
+			&card.Resume.SalaryMin, &card.Resume.SalaryMax,
+			&card.Resume.Source, &card.Resume.SourceText, &card.Resume.ParseStatus, &card.Resume.IsActive,
+			&card.Resume.LastConfirmedAt, &card.Resume.CreatedAt, &card.Resume.UpdatedAt,
+		); err != nil {
+			return nil, 0, fmt.Errorf("scan candidate card: %w", err)
+		}
+		card.Resume.Links = string(links)
+		out = append(out, card)
+	}
+	return out, total, rows.Err()
 }

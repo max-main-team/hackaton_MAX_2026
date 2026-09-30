@@ -59,3 +59,4 @@
 |----|--------|--------|---------|------|
 | T-34 | Тюнинг парсинга резюме: нормализация текста, промпт, тесты (+фикс 500 у новых юзеров) | ✅ | T-29 | [T-34-resume-parse-tuning.md](./T-34-resume-parse-tuning.md) |
 | T-35 | Бот: команды (start/help/status), персональный статус из БД, регистрация команд | ✅ | T-28 | [T-35-bot-commands.md](./T-35-bot-commands.md) |
+| T-36 | Все кандидаты для компаний: GET /candidates + экран /company/candidates | ✅ | T-09 | [T-36-all-candidates.md](./T-36-all-candidates.md) |

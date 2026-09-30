@@ -26,6 +26,12 @@ const RECRUITER_TABS: Tab[] = [
     icon: 'list',
     match: (p) => p === '/company/vacancies' || p === '/company/vacancies/new' || p === '/vacancy-list',
   },
+  {
+    to: '/company/candidates',
+    label: 'Кандидаты',
+    icon: 'userBig',
+    match: (p) => p.startsWith('/company/candidates'),
+  },
   { to: '/match', label: 'Подбор', icon: 'zap', match: (p) => p.startsWith('/vacancy/') },
   { to: '/map', label: 'Карта', icon: 'map', match: (p) => p === '/map' },
 ]
