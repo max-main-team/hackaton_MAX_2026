@@ -14,8 +14,6 @@ dist/
 .idea/
 .vscode/
 .DS_Store
-.playwright-mcp/
-bot-start-error.png
 *.png
 !frontend/public/*.svg
 *.pdf
