@@ -42,6 +42,7 @@ export default function ResumeScreen() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
   const [stage, setStage] = useState<'idle' | 'extracting' | 'parsing'>('idle')
+  const [parseOk, setParseOk] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [experienceDraft, setExperienceDraft] = useState<string | null>(null)
   const [confirmed, setConfirmed] = useState(false)
@@ -113,6 +114,7 @@ export default function ResumeScreen() {
       return
     }
     setError('')
+    setParseOk(false)
     const cleanedLinks = links.filter((l) => l.type.trim() && l.url.trim())
     try {
       const savedResume: Resume = await saveResume({ ...form, links: cleanedLinks })
@@ -126,6 +128,7 @@ export default function ResumeScreen() {
 
   const uploadPdf = async (file: File) => {
     setError('')
+    setParseOk(false)
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
     if (!isPdf) {
       setError('Загрузите файл в формате PDF')
@@ -150,12 +153,14 @@ export default function ResumeScreen() {
         body: JSON.stringify({ where: 'resume-parse-file', detail }),
       }).catch(() => {})
       if (e instanceof ApiError && e.status === 400 && /larger than 10/i.test(e.message)) {
+        setStage('idle')
         setError('Файл больше 10 МБ')
         return
       }
     }
 
     if (!serverAccepted) {
+      setStage('extracting')
       let text = ''
       try {
         const { extractPdfText } = await import('../../lib/pdf')
@@ -167,9 +172,11 @@ export default function ResumeScreen() {
           headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify({ where: 'resume-extract', detail }),
         }).catch(() => {})
+        setStage('idle')
         setError('Не удалось обработать PDF — заполните резюме вручную или попробуйте другой файл')
         return
       }
+      setStage('parsing')
       try {
         await parseResume(text, file.name)
       } catch (e) {
@@ -179,16 +186,25 @@ export default function ResumeScreen() {
           headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify({ where: 'resume-parse', detail }),
         }).catch(() => {})
+        setStage('idle')
         setError('Не удалось обработать PDF — заполните резюме вручную или попробуйте другой файл')
         return
       }
     }
 
+    setStage('parsing')
+
     // AI считает в фоне
     for (let i = 0; i < 90; i++) {
       await new Promise(r => setTimeout(r, 4000))
-      const r = await getResume()
+      let r: Resume
+      try {
+        r = await getResume()
+      } catch {
+        continue
+      }
       if (r.parse_status === 'failed') {
+        setStage('idle')
         setError('Не удалось распознать PDF — заполните резюме вручную')
         return
       }
@@ -210,9 +226,12 @@ export default function ResumeScreen() {
         setNotFound(false)
         setSaved(false)
         setExperienceDraft(null)
+        setStage('idle')
+        setParseOk(true)
         return
       }
     }
+    setStage('idle')
     setError('Обработка заняла слишком много времени — резюме заполнится чуть позже, обновите экран')
   }
 
@@ -255,6 +274,11 @@ export default function ResumeScreen() {
         {stage === 'parsing' && (
           <p className="muted" style={{ margin: 0 }}>
             AI распознаёт резюме… {elapsed} сек. Большое резюме занимает до 2–3 минут — не закрывайте экран
+          </p>
+        )}
+        {parseOk && (
+          <p className="ok-text" style={{ margin: 0 }}>
+            Резюме распознано — проверьте поля и сохраните
           </p>
         )}
       </div>
