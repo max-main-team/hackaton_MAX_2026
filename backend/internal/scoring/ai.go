@@ -125,10 +125,14 @@ func (c *AIClient) ScoreAI(ctx context.Context, vacancy, resume any) (AIResult, 
 const extractSystemPrompt = `Ты — HR-парсер резюме. Извлеки из текста структурированные данные и верни СТРОГО валидный JSON без markdown ровно по схеме:
 {"title": string, "skills": string, "experience_months": int, "about": string, "education": string, "city": string, "work_format": "onsite|hybrid|remote", "employment_type": "full_time|part_time|contract|internship", "salary_min": int|null, "salary_max": int|null, "notes": string}
 Правила:
-- skills — через запятую, как в резюме;
-- experience_months — суммарный опыт в месяцах (годы работы умножай на 12);
-- зарплата — рублей в месяц, только числа;
+- текст резюме может прийти из любого источника (hh.ru и другие джоб-борды, экспорт из LinkedIn, самописный документ) — не привязывайся к структуре конкретного сайта;
+- title — желаемая должность или последнее место работы (что ближе к сути);
+- skills — единый список через запятую: собери навыки и из отдельного блока, и из описаний опыта работы; дубли убирай; без перечисления софт-скиллов вроде «коммуникабельность»;
+- experience_months — суммарный опыт в месяцах (годы работы умножай на 12); периоды «по настоящее время» считай до сегодняшнего дня;
+- зарплата — рублей в месяц, только числа («от 250к» → 250000);
+- релокация/пожелания по городу: город — откуда человек или куда готов;
 - work_format/employment_type — только перечисленные значения, ближайшие к тексту;
+- контакты, телефоны, e-mail, номера страниц в поля не переноси;
 - ничего не выдумывай: нет данных в тексте — пустая строка / 0 / null;
 - notes — по-русски, 1-2 предложения: что извлекли и чего не нашли.`
 
@@ -174,17 +178,22 @@ func ParseDraftJSON(content string) (ResumeDraft, error) {
 
 var workFormatAliases = map[string]string{
 	"удалённо": "remote", "удаленно": "remote", "удалёнка": "remote", "удаленка": "remote",
-	"дистанционно": "remote", "remote": "remote", "из дома": "remote",
-	"гибрид": "hybrid", "гибридный график": "hybrid", "hybrid": "hybrid",
-	"офис": "onsite", "в офисе": "onsite", "onsite": "onsite",
+	"дистанционно": "remote", "удалённая работа": "remote", "удаленная работа": "remote",
+	"полностью удалённо": "remote", "из дома": "remote", "remote": "remote",
+	"гибрид": "hybrid", "гибридный график": "hybrid", "гибкий график": "hybrid",
+	"частично в офисе": "hybrid", "hybrid": "hybrid",
+	"офис": "onsite", "в офисе": "onsite", "полный день в офисе": "onsite", "onsite": "onsite",
 }
 
 var employmentTypeAliases = map[string]string{
 	"полный день": "full_time", "полная занятость": "full_time", "полная": "full_time",
-	"фуллтайм": "full_time", "full_time": "full_time",
+	"фуллтайм": "full_time", "full_time": "full_time", "full-time": "full_time",
 	"частичная занятость": "part_time", "частичная": "part_time", "part_time": "part_time",
-	"контракт": "contract", "договор": "contract", "contract": "contract",
-	"стажировка": "internship", "internship": "internship",
+	"подработка": "part_time", "part-time": "part_time",
+	"контракт": "contract", "договор": "contract", "проектная работа": "contract",
+	"проект": "contract", "самозанятость": "contract", "contract": "contract",
+	"стажировка": "internship", "стажер": "internship", "стажёр": "internship",
+	"интерн": "internship", "internship": "internship",
 }
 
 // NormalizeResumeDraft приводит ответ LLM к нашим enum'ам и границам.
@@ -192,8 +201,8 @@ func NormalizeResumeDraft(d ResumeDraft) ResumeDraft {
 	d.Title = strings.TrimSpace(d.Title)
 	d.Skills = normalizeSkills(d.Skills)
 	d.ExperienceMonths = clampInt(d.ExperienceMonths, 0, 600)
-	d.About = strings.TrimSpace(d.About)
-	d.Education = strings.TrimSpace(d.Education)
+	d.About = TruncateText(strings.TrimSpace(d.About), 4000)
+	d.Education = TruncateText(strings.TrimSpace(d.Education), 500)
 	d.City = strings.TrimSpace(d.City)
 	d.WorkFormat = normalizeEnum(d.WorkFormat, workFormatAliases, "onsite")
 	d.EmploymentType = normalizeEnum(d.EmploymentType, employmentTypeAliases, "full_time")
@@ -206,17 +215,28 @@ func NormalizeResumeDraft(d ResumeDraft) ResumeDraft {
 	if d.SalaryMin != nil && d.SalaryMax != nil && *d.SalaryMin > *d.SalaryMax {
 		d.SalaryMin, d.SalaryMax = d.SalaryMax, d.SalaryMin
 	}
-	d.Notes = strings.TrimSpace(d.Notes)
+	d.Notes = TruncateText(strings.TrimSpace(d.Notes), 1000)
 	return d
 }
 
 func normalizeSkills(s string) string {
 	parts := strings.Split(s, ",")
 	out := make([]string, 0, len(parts))
+	seen := make(map[string]struct{}, len(parts))
 	for _, p := range parts {
 		t := strings.TrimSpace(p)
-		if t != "" {
-			out = append(out, t)
+		if t == "" {
+			continue
+		}
+		t = TruncateText(t, 40)
+		key := strings.ToLower(t)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		out = append(out, t)
+		if len(out) == 60 {
+			break
 		}
 	}
 	return strings.Join(out, ", ")

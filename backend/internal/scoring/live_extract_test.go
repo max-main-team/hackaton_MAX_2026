@@ -2,12 +2,24 @@ package scoring
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 )
 
 func TestExtractResumeLive(t *testing.T) {
-	ai := NewAIClient("3c4d8334b980410b8dc0b21c71a87ceb.cT9SM1klD9lgdPpo", "https://api.z.ai/api/paas/v4", "glm-4.5-flash")
+	if os.Getenv("AI_LIVE_TEST") == "" {
+		t.Skip("live AI check: set AI_LIVE_TEST=1")
+	}
+	key := os.Getenv("AI_API_KEY")
+	if key == "" {
+		key = "3c4d8334b980410b8dc0b21c71a87ceb.cT9SM1klD9lgdPpo"
+	}
+	model := os.Getenv("AI_MODEL")
+	if model == "" {
+		model = "glm-4.5-flash"
+	}
+	ai := NewAIClient(key, "https://api.z.ai/api/paas/v4", model)
 	text := "Михаил Соковых\nBackend-разработчик\nОпыт 5 лет: Go, PostgreSQL, Redis, Docker, Kubernetes. Живу в Санкт-Петербурге.\nОбразование: ИТМО. Полный день, удалёнка. Зарплата от 250 тысяч рублей."
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()

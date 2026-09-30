@@ -200,13 +200,11 @@ func (h *ResumeHandler) Parse(c echo.Context) error {
 	if err := c.Bind(&in); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
-	text := strings.TrimSpace(in.Text)
+	text := scoring.NormalizeResumeText(in.Text)
 	if text == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "text is required")
 	}
-	if len(text) > parseTextMaxLen {
-		text = text[:parseTextMaxLen]
-	}
+	text = scoring.TruncateText(text, parseTextMaxLen)
 
 	ctx := c.Request().Context()
 	existing, err := h.resumes.GetByUserID(ctx, userID)
@@ -219,9 +217,13 @@ func (h *ResumeHandler) Parse(c echo.Context) error {
 	}
 
 	draft := existing
+	draft.UserID = userID
 	draft.Source = "file_parse"
 	draft.SourceText = text
 	draft.ParseStatus = "processing"
+	if draft.Links == "" {
+		draft.Links = "[]"
+	}
 	if existing.ID == 0 {
 		draft.IsActive = false
 	}
@@ -304,7 +306,7 @@ func extractPDFText(path string) (string, error) {
 		if err != nil {
 			continue
 		}
-		text = strings.Join(strings.Fields(text), " ")
+		text = scoring.NormalizeResumeText(text)
 		b.WriteString(text)
 		b.WriteString("\n\n")
 		total += len(text)
@@ -372,13 +374,11 @@ func (h *ResumeHandler) ParseFile(c echo.Context) error {
 	}
 
 	text, extractErr := extractPDFText(tmpPath)
-	text = strings.TrimSpace(text)
+	text = scoring.NormalizeResumeText(text)
 	if extractErr != nil || len(text) < parseTextMinLen {
 		return echo.NewHTTPError(http.StatusUnprocessableEntity, "this PDF has no text layer (likely a scan) — fill the resume manually")
 	}
-	if len(text) > parseTextMaxLen {
-		text = text[:parseTextMaxLen]
-	}
+	text = scoring.TruncateText(text, parseTextMaxLen)
 
 	ctx := c.Request().Context()
 	existing, err := h.resumes.GetByUserID(ctx, userID)
@@ -391,9 +391,13 @@ func (h *ResumeHandler) ParseFile(c echo.Context) error {
 	}
 
 	draft := existing
+	draft.UserID = userID
 	draft.Source = "file_parse"
 	draft.SourceText = text
 	draft.ParseStatus = "processing"
+	if draft.Links == "" {
+		draft.Links = "[]"
+	}
 	if existing.ID == 0 {
 		draft.IsActive = false
 	}
